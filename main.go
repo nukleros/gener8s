@@ -1,45 +1,40 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
-	"os"
 	"path/filepath"
-	"text/template"
 
-	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+
+	core_v1 "gitlab.eng.vmware.com/landerr/k8s-object-code-generator/core/v1"
 )
 
 func main() {
 
+	// read manifest file
 	manifestFile, _ := filepath.Abs("sample-ns.yaml")
 	yamlFile, err := ioutil.ReadFile(manifestFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var ns v1.Namespace
+	// determine group version kind of resource in manifest
+	metaFactory := serializer.DefaultMetaFactory
 
-	err = yaml.Unmarshal(yamlFile, &ns)
+	gvk, err := metaFactory.Interpret(yamlFile)
 	if err != nil {
 		panic(err)
 	}
 
-	t, err := template.New("thing").Parse(nsTemplate)
-	if err != nil {
+	// call code generation func for the GVK if supported
+	switch gvk.String() {
+	case "/v1, Kind=Namespace":
+		if err = core_v1.GenNamespace(yamlFile); err != nil {
+			panic(err)
+		}
+	default:
+		errors.New("Unsupported resource kind")
 		panic(err)
 	}
-	err = t.Execute(os.Stdout, ns)
-	if err != nil {
-		panic(err)
-	}
-
 }
-
-const nsTemplate = `
-var ns = &v1.Namespace{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: {{ .ObjectMeta.Name }},
-	},
-}
-`
