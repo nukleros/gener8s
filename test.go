@@ -1,0 +1,92 @@
+package main
+
+import (
+	"bytes"
+	"flag"
+	"go/format"
+	"os"
+	"text/template"
+
+	"gitlab.eng.vmware.com/landerr/k8s-object-code-generator/pkg/generate"
+)
+
+var manifestFile string
+
+type source struct {
+	Object string
+}
+
+func main() {
+
+	manifestPath := *flag.String("manifest", "sample/deploy-part.yaml", "path to resource manifest")
+
+	t, err := template.New("testTemplate").Parse(testTemplate)
+	if err != nil {
+		panic(err)
+	}
+
+	object, err := generate.Generate(manifestPath, "deployment")
+	if err != nil {
+		panic(err)
+	}
+
+	src := source{Object: object}
+	var buf bytes.Buffer
+	if err = t.Execute(&buf, src); err != nil {
+		panic(err)
+	}
+	fileSource, err := format.Source(buf.Bytes())
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := os.Create("/tmp/kocg-test.go")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	f.Write(fileSource)
+}
+
+const testTemplate = `
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+func main() {
+	kubeconfig := os.Getenv("KUBECONFIG")
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err)
+	}
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+
+	namespace := "default"
+
+	deploymentRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+
+	{{ .Object }}
+
+	fmt.Println("Creating deployment...")
+	result, err := client.Resource(deploymentRes).Namespace(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created deployment %q.\n", result.GetName())
+}
+`

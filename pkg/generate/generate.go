@@ -28,6 +28,8 @@ type object struct {
 	Elements []element
 }
 
+// Generate generates unstructured go types for resources defined in yaml
+// manifests
 func Generate(filename, varName string) (string, error) {
 
 	manifestFile, _ := filepath.Abs(filename)
