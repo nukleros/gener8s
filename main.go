@@ -1,168 +1,22 @@
+/*
+Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package main
 
-import (
-	"bytes"
-	//"encoding/json"
-	"fmt"
-	"go/format"
-	"io/ioutil"
-	"path/filepath"
-	"reflect"
-	"strconv"
-	"text/template"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/yaml"
-)
-
-type element struct {
-	ValType  string
-	Key      string
-	Value    string
-	Parent   bool
-	Elements []element
-}
-
-type thingStuff struct {
-	VarName  string
-	Elements []element
-}
+import "gitlab.eng.vmware.com/landerr/k8s-object-code-generator/cmd"
 
 func main() {
-
-	//manifestFile, _ := filepath.Abs("sample-ns.yaml")
-	manifestFile, _ := filepath.Abs("sample-deploy-part.yaml")
-	yamlFile, err := ioutil.ReadFile(manifestFile)
-	if err != nil {
-		panic(err)
-	}
-
-	thing := unstructured.Unstructured{}
-
-	err = yaml.Unmarshal(yamlFile, &thing)
-	if err != nil {
-		panic(err)
-	}
-
-	theThing := thingStuff{VarName: "foo"}
-
-	for k, v := range thing.Object {
-		elem := addElement(k, v)
-		theThing.Elements = append(theThing.Elements, *elem)
-	}
-
-	//// display json repr of struct for debugging
-	//thingJson, err := json.MarshalIndent(theThing, ``, `  `)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(string(thingJson))
-
-	t, err := template.New("herbie").Parse(objTemplate)
-	if err != nil {
-		panic(err)
-	}
-
-	var buf bytes.Buffer
-	if err = t.Execute(&buf, theThing); err != nil {
-		panic(err)
-	}
-	p, err := format.Source(buf.Bytes())
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(string(p))
+	cmd.Execute()
 }
-
-func addElement(k string, v interface{}) *element {
-
-	var elem element
-
-	if v == nil {
-		elem = element{
-			ValType: "nil",
-			Key:     k,
-			Value:   "nil",
-		}
-		return &elem
-	}
-	rt := reflect.TypeOf(v)
-	switch rt.Kind() {
-	case reflect.Invalid:
-		fmt.Println("Invalid")
-	case reflect.Bool:
-		fmt.Println("Bool")
-	case reflect.String:
-		elem = element{
-			ValType: "string",
-			Key:     k,
-			Value:   v.(string),
-		}
-	case reflect.Int:
-		fmt.Println("Int")
-	case reflect.Int64:
-		elem = element{
-			ValType: "int64",
-			Key:     k,
-			Value:   strconv.FormatInt(v.(int64), 10),
-		}
-	case reflect.Map:
-		elem = element{
-			ValType: "map",
-			Key:     k,
-		}
-		for key, value := range v.(map[string]interface{}) {
-			newElem := addElement(key, value)
-			elem.Elements = append(elem.Elements, *newElem)
-		}
-	case reflect.Slice:
-		elem = element{
-			ValType: "slice",
-			Key:     k,
-		}
-		for _, i := range v.([]interface{}) {
-			parentElem := addElement("parent", i)
-			parentElem.Parent = true
-			elem.Elements = append(elem.Elements, *parentElem)
-		}
-	case reflect.Array:
-		fmt.Println("Array")
-	default:
-		fmt.Println("default")
-	}
-
-	return &elem
-}
-
-const objTemplate = `
-var {{ .VarName }} = &unstructured.Unstructured{
-	Object: map[string]interface{}{
-		{{- template "element" .Elements }}
-	},
-}
-
-{{- define "element" }}
-	{{- range . }}
-		{{- if eq .ValType "nil" }}
-			"{{ .Key }}": nil,
-		{{- else if eq .ValType "string" }}
-			"{{ .Key }}": "{{ .Value -}}",
-		{{- else if eq .ValType "int64" }}
-			"{{ .Key }}": int64({{ .Value -}}),
-		{{- else if eq .ValType "map" }}
-			{{- if ne .Parent true }}
-				"{{ .Key }}": map[string]interface{}{
-			{{- else }}
-				{
-			{{- end }}
-				{{- template "element" .Elements }}
-			},
-		{{- else if eq .ValType "slice" }}
-			"{{ .Key }}": []map[string]interface{}{
-				{{- template "element" .Elements }}
-			},
-		{{- end }}
-	{{- end }}
-{{- end }}
-`
