@@ -1,40 +1,168 @@
 package main
 
 import (
-	"errors"
+	"bytes"
+	//"encoding/json"
+	"fmt"
+	"go/format"
 	"io/ioutil"
 	"path/filepath"
+	"reflect"
+	"strconv"
+	"text/template"
 
-	serializer "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-
-	core_v1 "gitlab.eng.vmware.com/landerr/k8s-object-code-generator/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
+
+type element struct {
+	ValType  string
+	Key      string
+	Value    string
+	Parent   bool
+	Elements []element
+}
+
+type thingStuff struct {
+	VarName  string
+	Elements []element
+}
 
 func main() {
 
-	// read manifest file
-	manifestFile, _ := filepath.Abs("sample-ns.yaml")
+	//manifestFile, _ := filepath.Abs("sample-ns.yaml")
+	manifestFile, _ := filepath.Abs("sample-deploy-part.yaml")
 	yamlFile, err := ioutil.ReadFile(manifestFile)
 	if err != nil {
 		panic(err)
 	}
 
-	// determine group version kind of resource in manifest
-	metaFactory := serializer.DefaultMetaFactory
+	thing := unstructured.Unstructured{}
 
-	gvk, err := metaFactory.Interpret(yamlFile)
+	err = yaml.Unmarshal(yamlFile, &thing)
 	if err != nil {
 		panic(err)
 	}
 
-	// call code generation func for the GVK if supported
-	switch gvk.String() {
-	case "/v1, Kind=Namespace":
-		if err = core_v1.GenNamespace(yamlFile); err != nil {
-			panic(err)
-		}
-	default:
-		errors.New("Unsupported resource kind")
+	theThing := thingStuff{VarName: "foo"}
+
+	for k, v := range thing.Object {
+		elem := addElement(k, v)
+		theThing.Elements = append(theThing.Elements, *elem)
+	}
+
+	//// display json repr of struct for debugging
+	//thingJson, err := json.MarshalIndent(theThing, ``, `  `)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(string(thingJson))
+
+	t, err := template.New("herbie").Parse(objTemplate)
+	if err != nil {
 		panic(err)
 	}
+
+	var buf bytes.Buffer
+	if err = t.Execute(&buf, theThing); err != nil {
+		panic(err)
+	}
+	p, err := format.Source(buf.Bytes())
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(p))
 }
+
+func addElement(k string, v interface{}) *element {
+
+	var elem element
+
+	if v == nil {
+		elem = element{
+			ValType: "nil",
+			Key:     k,
+			Value:   "nil",
+		}
+		return &elem
+	}
+	rt := reflect.TypeOf(v)
+	switch rt.Kind() {
+	case reflect.Invalid:
+		fmt.Println("Invalid")
+	case reflect.Bool:
+		fmt.Println("Bool")
+	case reflect.String:
+		elem = element{
+			ValType: "string",
+			Key:     k,
+			Value:   v.(string),
+		}
+	case reflect.Int:
+		fmt.Println("Int")
+	case reflect.Int64:
+		elem = element{
+			ValType: "int64",
+			Key:     k,
+			Value:   strconv.FormatInt(v.(int64), 10),
+		}
+	case reflect.Map:
+		elem = element{
+			ValType: "map",
+			Key:     k,
+		}
+		for key, value := range v.(map[string]interface{}) {
+			newElem := addElement(key, value)
+			elem.Elements = append(elem.Elements, *newElem)
+		}
+	case reflect.Slice:
+		elem = element{
+			ValType: "slice",
+			Key:     k,
+		}
+		for _, i := range v.([]interface{}) {
+			parentElem := addElement("parent", i)
+			parentElem.Parent = true
+			elem.Elements = append(elem.Elements, *parentElem)
+		}
+	case reflect.Array:
+		fmt.Println("Array")
+	default:
+		fmt.Println("default")
+	}
+
+	return &elem
+}
+
+const objTemplate = `
+var {{ .VarName }} = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		{{- template "element" .Elements }}
+	},
+}
+
+{{- define "element" }}
+	{{- range . }}
+		{{- if eq .ValType "nil" }}
+			"{{ .Key }}": nil,
+		{{- else if eq .ValType "string" }}
+			"{{ .Key }}": "{{ .Value -}}",
+		{{- else if eq .ValType "int64" }}
+			"{{ .Key }}": int64({{ .Value -}}),
+		{{- else if eq .ValType "map" }}
+			{{- if ne .Parent true }}
+				"{{ .Key }}": map[string]interface{}{
+			{{- else }}
+				{
+			{{- end }}
+				{{- template "element" .Elements }}
+			},
+		{{- else if eq .ValType "slice" }}
+			"{{ .Key }}": []map[string]interface{}{
+				{{- template "element" .Elements }}
+			},
+		{{- end }}
+	{{- end }}
+{{- end }}
+`

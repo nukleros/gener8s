@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  labels:
+    k8s-app: kube-dns
+    foo: bar
+  name: coredns
+  namespace: kube-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        k8s-app: kube-dns
+    spec:
+      containers:
+      - name: coredns
+        image: registry.tkg.vmware.run/coredns:v1.6.5_vmware.6
+      - name: other-coredns
+        image: registry.tkg.vmware.run/other-coredns:v1.6.5_vmware.6
+
