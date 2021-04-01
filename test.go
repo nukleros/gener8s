@@ -18,7 +18,13 @@ type source struct {
 
 func main() {
 
-	manifestPath := *flag.String("manifest", "sample/deploy-part.yaml", "path to resource manifest")
+	var manifestPath string
+	var outputPath string
+
+	flag.StringVar(&manifestPath, "manifest", "sample/deploy-part.yaml", "path to resource manifest")
+	flag.StringVar(&outputPath, "output", "/tmp/kocg-test.go", "path to output go source code")
+
+	flag.Parse()
 
 	t, err := template.New("testTemplate").Parse(testTemplate)
 	if err != nil {
@@ -40,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	f, err := os.Create("/tmp/kocg-test.go")
+	f, err := os.Create(outputPath)
 	if err != nil {
 		panic(err)
 	}

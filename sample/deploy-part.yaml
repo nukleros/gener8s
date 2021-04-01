@@ -7,7 +7,6 @@ metadata:
     k8s-app: kube-dns
     foo: bar
   name: coredns
-  namespace: kube-system
 spec:
   replicas: 2
   selector:
