@@ -123,14 +123,29 @@ func addElement(k string, v interface{}) *element {
 			elem.Elements = append(elem.Elements, *newElem)
 		}
 	case reflect.Slice:
-		elem = element{
-			ValType: "slice",
-			Key:     k,
-		}
-		for _, i := range v.([]interface{}) {
-			parentElem := addElement("parent", i)
-			parentElem.Parent = true
-			elem.Elements = append(elem.Elements, *parentElem)
+		sliceVal := v.([]interface{})[0]
+		srt := reflect.TypeOf(sliceVal)
+		switch srt.Kind() {
+		case reflect.String:
+			elem = element{
+				ValType: "slice-strings",
+				Key:     k,
+			}
+			for _, i := range v.([]interface{}) {
+				parentElem := addElement("parent", i)
+				parentElem.Parent = true
+				elem.Elements = append(elem.Elements, *parentElem)
+			}
+		default:
+			elem = element{
+				ValType: "slice-interfaces",
+				Key:     k,
+			}
+			for _, i := range v.([]interface{}) {
+				parentElem := addElement("parent", i)
+				parentElem.Parent = true
+				elem.Elements = append(elem.Elements, *parentElem)
+			}
 		}
 	case reflect.Array:
 		fmt.Println("Array")
@@ -155,7 +170,11 @@ var {{ .VarName }} = &unstructured.Unstructured{
 		{{- else if eq .ValType "bool" }}
 			"{{ .Key }}": {{ .Value -}},
 		{{- else if eq .ValType "string" }}
-			"{{ .Key }}": "{{ .Value -}}",
+			{{- if ne .Parent true }}
+				"{{ .Key }}": "{{ .Value -}}",
+			{{- else }}
+				"{{ .Value -}}",
+			{{- end }}
 		{{- else if eq .ValType "int64" }}
 			"{{ .Key }}": int64({{ .Value -}}),
 		{{- else if eq .ValType "map" }}
@@ -166,7 +185,11 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- end }}
 				{{- template "element" .Elements }}
 			},
-		{{- else if eq .ValType "slice" }}
+		{{- else if eq .ValType "slice-strings" }}
+			"{{ .Key }}": []string{
+				{{- template "element" .Elements }}
+			},
+		{{- else if eq .ValType "slice-interfaces" }}
 			"{{ .Key }}": []map[string]interface{}{
 				{{- template "element" .Elements }}
 			},

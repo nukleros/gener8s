@@ -20,7 +20,7 @@ test:
 test.run: test
 	go run $(TEST_OUTPUT)
 
-test.validate:
+test.verify:
 	kubectl get deploy
 
 test.clean:

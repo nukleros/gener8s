@@ -88,7 +88,6 @@ func main() {
 
 	{{ .Object }}
 
-	fmt.Println("Creating deployment...")
 	result, err := client.Resource(deploymentRes).Namespace(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
 		panic(err)
