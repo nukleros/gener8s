@@ -92,6 +92,7 @@ func addElement(k string, v interface{}) *element {
 	rt := reflect.TypeOf(v)
 	switch rt.Kind() {
 	case reflect.Invalid:
+		// unsupported
 		fmt.Println("Invalid")
 	case reflect.Bool:
 		elem = element{
@@ -99,20 +100,78 @@ func addElement(k string, v interface{}) *element {
 			Key:     k,
 			Value:   strconv.FormatBool(v.(bool)),
 		}
-	case reflect.String:
-		elem = element{
-			ValType: "string",
-			Key:     k,
-			Value:   v.(string),
-		}
 	case reflect.Int:
-		fmt.Println("Int")
+		elem = element{
+			ValType: "int",
+			Key:     k,
+			Value:   strconv.FormatInt(v.(int), 10),
+		}
+	case reflect.Int8:
+		elem = element{
+			ValType: "int8",
+			Key:     k,
+			Value:   strconv.FormatInt(v.(int8), 10),
+		}
+	case reflect.Int16:
+		elem = element{
+			ValType: "int16",
+			Key:     k,
+			Value:   strconv.FormatInt(v.(int16), 10),
+		}
+	case reflect.Int32:
+		elem = element{
+			ValType: "int32",
+			Key:     k,
+			Value:   strconv.FormatInt(v.(int32), 10),
+		}
 	case reflect.Int64:
 		elem = element{
 			ValType: "int64",
 			Key:     k,
 			Value:   strconv.FormatInt(v.(int64), 10),
 		}
+	case reflect.Uint:
+		// unsupported
+		fmt.Println("Uint")
+	case reflect.Uint8:
+		// unsupported
+		fmt.Println("Uint8")
+	case reflect.Uint16:
+		// unsupported
+		fmt.Println("Uint16")
+	case reflect.Uint32:
+		// unsupported
+		fmt.Println("Uint32")
+	case reflect.Uint64:
+		// unsupported
+		fmt.Println("Uint64")
+	case reflect.Uintptr:
+		// unsupported
+		fmt.Println("Uintptr")
+	case reflect.Float32:
+		// unsupported
+		fmt.Println("Float32")
+	case reflect.Float64:
+		// unsupported
+		fmt.Println("Float64")
+	case reflect.Complex64:
+		// unsupported
+		fmt.Println("Complex64")
+	case reflect.Complex128:
+		// unsupported
+		fmt.Println("Complex128")
+	case reflect.Array:
+		// unsupported
+		fmt.Println("Array")
+	case reflect.Chan:
+		// unsupported
+		fmt.Println("Chan")
+	case reflect.Func:
+		// unsupported
+		fmt.Println("Func")
+	case reflect.Interface:
+		// unsupported
+		fmt.Println("Interface")
 	case reflect.Map:
 		elem = element{
 			ValType: "map",
@@ -122,6 +181,9 @@ func addElement(k string, v interface{}) *element {
 			newElem := addElement(key, value)
 			elem.Elements = append(elem.Elements, *newElem)
 		}
+	case reflect.Ptr:
+		// unsupported
+		fmt.Println("Ptr")
 	case reflect.Slice:
 		sliceVal := v.([]interface{})[0]
 		srt := reflect.TypeOf(sliceVal)
@@ -147,9 +209,20 @@ func addElement(k string, v interface{}) *element {
 				elem.Elements = append(elem.Elements, *parentElem)
 			}
 		}
-	case reflect.Array:
-		fmt.Println("Array")
+	case reflect.String:
+		elem = element{
+			ValType: "string",
+			Key:     k,
+			Value:   v.(string),
+		}
+	case reflect.Struct:
+		// unsupported
+		fmt.Println("Struct")
+	case reflect.UnsafePointer:
+		// unsupported
+		fmt.Println("UnsafePointer")
 	default:
+		// unsupported
 		fmt.Println("default")
 	}
 
@@ -175,6 +248,14 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- else }}
 				"{{ .Value -}}",
 			{{- end }}
+		{{- else if eq .ValType "int" }}
+			"{{ .Key }}": int({{ .Value -}}),
+		{{- else if eq .ValType "int8" }}
+			"{{ .Key }}": int8({{ .Value -}}),
+		{{- else if eq .ValType "int16" }}
+			"{{ .Key }}": int16({{ .Value -}}),
+		{{- else if eq .ValType "int32" }}
+			"{{ .Key }}": int32({{ .Value -}}),
 		{{- else if eq .ValType "int64" }}
 			"{{ .Key }}": int64({{ .Value -}}),
 		{{- else if eq .ValType "map" }}
