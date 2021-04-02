@@ -21,4 +21,6 @@ spec:
       containers:
       - name: coredns
         image: registry.tkg.vmware.run/coredns:v1.6.5_vmware.6
+        securityContext:
+          allowPrivilegeEscalation: false
 

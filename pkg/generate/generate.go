@@ -52,7 +52,7 @@ func Generate(filename, varName string) (string, error) {
 		obj.Elements = append(obj.Elements, *elem)
 	}
 
-	//// display json repr of struct for debugging
+	//// display json representation of struct for debugging
 	//objJson, err := json.MarshalIndent(obj, ``, `  `)
 	//if err != nil {
 	//	return "", err
@@ -94,7 +94,11 @@ func addElement(k string, v interface{}) *element {
 	case reflect.Invalid:
 		fmt.Println("Invalid")
 	case reflect.Bool:
-		fmt.Println("Bool")
+		elem = element{
+			ValType: "bool",
+			Key:     k,
+			Value:   strconv.FormatBool(v.(bool)),
+		}
 	case reflect.String:
 		elem = element{
 			ValType: "string",
@@ -148,6 +152,8 @@ var {{ .VarName }} = &unstructured.Unstructured{
 	{{- range . }}
 		{{- if eq .ValType "nil" }}
 			"{{ .Key }}": nil,
+		{{- else if eq .ValType "bool" }}
+			"{{ .Key }}": {{ .Value -}},
 		{{- else if eq .ValType "string" }}
 			"{{ .Key }}": "{{ .Value -}}",
 		{{- else if eq .ValType "int64" }}
