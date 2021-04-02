@@ -6,6 +6,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 TEST_OUTPUT ?= "/tmp/kocg-test.go"
+TEST_MANIFEST ?= "sample/deploy-part.yaml"
 
 build:
 	go build -o kocg main.go
@@ -14,7 +15,7 @@ install: build
 	mv kocg $(GOBIN)
 
 test:
-	go run test.go -manifest sample/deploy-part.yaml output $(TEST_OUTPUT)
+	go run test.go -manifest $(TEST_MANIFEST) output $(TEST_OUTPUT)
 
 test.run: test
 	go run $(TEST_OUTPUT)
