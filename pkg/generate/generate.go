@@ -342,7 +342,6 @@ func extractComment(lineArray []string) string {
 func goComment(key string) (string, string) {
 
 	splitKey := strings.Split(key, "(")
-	fmt.Println(splitKey)
 	comment := strings.TrimSuffix(splitKey[1], ")")
 	k := strings.TrimSuffix(splitKey[0], "+comment")
 
