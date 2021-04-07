@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,6 +21,7 @@ type element struct {
 	Key      string
 	Value    string
 	Parent   bool
+	Comment  string
 	Elements []element
 }
 
@@ -38,9 +40,14 @@ func Generate(filename, varName string) (string, error) {
 		return "", err
 	}
 
+	commentedYaml, err := captureComments(string(yamlFile))
+	if err != nil {
+		return "", err
+	}
+
 	unstructuredObj := unstructured.Unstructured{}
 
-	err = yaml.Unmarshal(yamlFile, &unstructuredObj)
+	err = yaml.Unmarshal([]byte(commentedYaml), &unstructuredObj)
 	if err != nil {
 		return "", err
 	}
@@ -81,6 +88,11 @@ func addElement(k string, v interface{}) *element {
 
 	var elem element
 
+	var comment string
+	if strings.Contains(k, "+comment") {
+		k, comment = goComment(k)
+	}
+
 	if v == nil {
 		elem = element{
 			ValType: "nil",
@@ -99,36 +111,42 @@ func addElement(k string, v interface{}) *element {
 			ValType: "bool",
 			Key:     k,
 			Value:   strconv.FormatBool(v.(bool)),
+			Comment: comment,
 		}
 	case reflect.Int:
 		elem = element{
 			ValType: "int",
 			Key:     k,
-			Value:   strconv.FormatInt(v.(int), 10),
+			Value:   strconv.FormatInt(int64(v.(int)), 10),
+			Comment: comment,
 		}
 	case reflect.Int8:
 		elem = element{
 			ValType: "int8",
 			Key:     k,
-			Value:   strconv.FormatInt(v.(int8), 10),
+			Value:   strconv.FormatInt(int64(v.(int8)), 10),
+			Comment: comment,
 		}
 	case reflect.Int16:
 		elem = element{
 			ValType: "int16",
 			Key:     k,
-			Value:   strconv.FormatInt(v.(int16), 10),
+			Value:   strconv.FormatInt(int64(v.(int16)), 10),
+			Comment: comment,
 		}
 	case reflect.Int32:
 		elem = element{
 			ValType: "int32",
 			Key:     k,
-			Value:   strconv.FormatInt(v.(int32), 10),
+			Value:   strconv.FormatInt(int64(v.(int32)), 10),
+			Comment: comment,
 		}
 	case reflect.Int64:
 		elem = element{
 			ValType: "int64",
 			Key:     k,
 			Value:   strconv.FormatInt(v.(int64), 10),
+			Comment: comment,
 		}
 	case reflect.Uint:
 		// unsupported
@@ -176,6 +194,7 @@ func addElement(k string, v interface{}) *element {
 		elem = element{
 			ValType: "map",
 			Key:     k,
+			Comment: comment,
 		}
 		for key, value := range v.(map[string]interface{}) {
 			newElem := addElement(key, value)
@@ -192,6 +211,7 @@ func addElement(k string, v interface{}) *element {
 			elem = element{
 				ValType: "slice-strings",
 				Key:     k,
+				Comment: comment,
 			}
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
@@ -202,6 +222,7 @@ func addElement(k string, v interface{}) *element {
 			elem = element{
 				ValType: "slice-interfaces",
 				Key:     k,
+				Comment: comment,
 			}
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
@@ -210,10 +231,15 @@ func addElement(k string, v interface{}) *element {
 			}
 		}
 	case reflect.String:
+		val := v.(string)
+		if strings.Contains(val, "+comment") {
+			val, comment = goComment(val)
+		}
 		elem = element{
 			ValType: "string",
 			Key:     k,
-			Value:   v.(string),
+			Value:   strings.Trim(val, " "),
+			Comment: comment,
 		}
 	case reflect.Struct:
 		// unsupported
@@ -229,6 +255,100 @@ func addElement(k string, v interface{}) *element {
 	return &elem
 }
 
+// captureComments captures the comment and adds it to the key so that it is not
+// lost during yaml unmarshalling
+func captureComments(rawContent string) (string, error) {
+
+	lines := strings.Split(string(rawContent), "\n")
+	for i, line := range lines {
+		if containsComment(line) {
+			commentedLine, err := processComments(line)
+			if err != nil {
+				return "", err
+			}
+			lines[i] = commentedLine
+		}
+	}
+
+	return strings.Join(lines, "\n"), nil
+}
+
+// containsComment returns true if there's a comment that is not a part of any
+// key or value
+// TODO: be more intelligent about "#" marks inside keys or values that aren't
+// actually comments
+func containsComment(line string) bool {
+	return strings.Contains(line, "#")
+}
+
+// processComments splits a single line into its keys and values as needed, then
+// sends the line contents to get the comment extracted
+func processComments(line string) (string, error) {
+
+	var commentEncodedLine string
+	keyValueArray := strings.Split(line, ":")
+	if len(keyValueArray) > 2 {
+		keyValueArray = processValueColons(keyValueArray)
+		commentEncodedLine = extractComment(keyValueArray)
+	} else {
+		commentEncodedLine = extractComment(keyValueArray)
+	}
+	return commentEncodedLine, nil
+}
+
+// processValueColons accounts for colons in values once line is split to
+// extract keys and values
+func processValueColons(lineArray []string) []string {
+
+	var value string
+	for i, v := range lineArray {
+		if i == 1 {
+			value = v
+		} else if i > 1 {
+			value = value + ":" + v
+		}
+	}
+
+	return []string{lineArray[0], value}
+}
+
+// extractComment splits around the comment symbol and adds the comment to the
+// key
+func extractComment(lineArray []string) string {
+
+	var lineContent string
+	if len(lineArray) > 1 {
+		// key value pair OR key without value
+		key := lineArray[0]
+		value := lineArray[1]
+		commentArray := strings.Split(value, "#")
+		comment := commentArray[1]
+		comment = fmt.Sprintf("+comment(%s)", comment)
+		key = key + comment
+		lineContent = fmt.Sprintf("%s: %s", key, value)
+	} else {
+		// no colon, e.g. array value
+		lineContent = lineArray[0]
+		lineContentArray := strings.Split(lineContent, "#")
+		comment := lineContentArray[1]
+		comment = fmt.Sprintf("+comment(%s)", comment)
+		lineContent = fmt.Sprintf("%s%s", lineContentArray[0], comment)
+	}
+
+	return lineContent
+}
+
+// goComment pulls out the comments for Go source
+func goComment(key string) (string, string) {
+
+	splitKey := strings.Split(key, "(")
+	fmt.Println(splitKey)
+	comment := strings.TrimSuffix(splitKey[1], ")")
+	k := strings.TrimSuffix(splitKey[0], "+comment")
+
+	return k, comment
+}
+
 const objTemplate = `
 var {{ .VarName }} = &unstructured.Unstructured{
 	Object: map[string]interface{}{
@@ -241,26 +361,26 @@ var {{ .VarName }} = &unstructured.Unstructured{
 		{{- if eq .ValType "nil" }}
 			"{{ .Key }}": nil,
 		{{- else if eq .ValType "bool" }}
-			"{{ .Key }}": {{ .Value -}},
+			"{{ .Key }}": {{ .Value -}},  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "string" }}
 			{{- if ne .Parent true }}
-				"{{ .Key }}": "{{ .Value -}}",
+				"{{ .Key }}": "{{ .Value -}}",  {{ if .Comment }}// {{ .Comment }}{{ end }}
 			{{- else }}
-				"{{ .Value -}}",
+				"{{ .Value -}}",  {{ if .Comment }}// {{ .Comment }}{{ end }}
 			{{- end }}
 		{{- else if eq .ValType "int" }}
-			"{{ .Key }}": int({{ .Value -}}),
+			"{{ .Key }}": int({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "int8" }}
-			"{{ .Key }}": int8({{ .Value -}}),
+			"{{ .Key }}": int8({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "int16" }}
-			"{{ .Key }}": int16({{ .Value -}}),
+			"{{ .Key }}": int16({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "int32" }}
-			"{{ .Key }}": int32({{ .Value -}}),
+			"{{ .Key }}": int32({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "int64" }}
-			"{{ .Key }}": int64({{ .Value -}}),
+			"{{ .Key }}": int64({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
 		{{- else if eq .ValType "map" }}
 			{{- if ne .Parent true }}
-				"{{ .Key }}": map[string]interface{}{
+				"{{ .Key }}": map[string]interface{}{  {{ if .Comment }}// {{ .Comment }}{{ end }}
 			{{- else }}
 				{
 			{{- end }}

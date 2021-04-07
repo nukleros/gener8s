@@ -8,22 +8,22 @@ metadata:
     foo: bar
   name: coredns
 spec:
-  replicas: 2
+  replicas: 2  # This is the replicas field
   selector:
     matchLabels:
       k8s-app: kube-dns
-  template:
+  template:  # The template key
     metadata:
       creationTimestamp: null
       labels:
-        k8s-app: kube-dns
+        k8s-app: "kube-dns"  # This is a pod label
     spec:
       containers:
-      - name: coredns
-        image: registry.tkg.vmware.run/coredns:v1.6.5_vmware.6
+      - name: "core-dns"
+        image: registry.tkg.vmware.run/coredns:v1.6.5_vmware.6  # The image value has a colon
         args:
-        - -conf
-        - /etc/coredns/Corefile
+        - -conf  # first value in array
+        - /etc/coredns/Corefile  # second value in array
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: false  # Here is a bool value
 

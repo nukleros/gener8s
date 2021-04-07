@@ -8,7 +8,11 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	k8s.io/api v0.22.0-alpha.0
 	k8s.io/apimachinery v0.22.0-alpha.0
 	k8s.io/client-go v0.22.0-alpha.0
+	sigs.k8s.io/yaml v1.2.0
 )
+
+replace sigs.k8s.io/yaml => /Users/landerr/go/src/github.com/lander2k2/yaml
