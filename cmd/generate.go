@@ -17,6 +17,8 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -24,8 +26,8 @@ import (
 )
 
 var (
-	manifestFile string
-	variableName string
+	manifestFilepath string
+	variableName     string
 )
 
 // generateCmd represents the generate command
@@ -35,10 +37,22 @@ var generateCmd = &cobra.Command{
 	Long: `Pass a manifest file that contains valid yaml for any Kubernetes
 object and get source code for an unstructured Kubernetes object type.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		source, err := generate.Generate(manifestFile, variableName)
+
+		manifestFile, err := filepath.Abs(manifestFilepath)
 		if err != nil {
 			panic(err)
 		}
+
+		yamlContent, err := ioutil.ReadFile(manifestFile)
+		if err != nil {
+			panic(err)
+		}
+
+		source, err := generate.Generate(yamlContent, variableName)
+		if err != nil {
+			panic(err)
+		}
+
 		fmt.Println(source)
 	},
 }
@@ -46,7 +60,7 @@ object and get source code for an unstructured Kubernetes object type.`,
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().StringVarP(&manifestFile, "manifest-file", "m", "", "manifest file containing resource definition")
+	generateCmd.Flags().StringVarP(&manifestFilepath, "manifest-filepath", "m", "", "path to manifest file containing resource definition")
 	generateCmd.Flags().StringVarP(&variableName, "variable-name", "v", "object", "variable name for resource object")
 	generateCmd.MarkFlagRequired("manifest-file")
 }

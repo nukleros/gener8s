@@ -5,8 +5,6 @@ import (
 	//"encoding/json"
 	"fmt"
 	"go/format"
-	"io/ioutil"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -32,15 +30,9 @@ type object struct {
 
 // Generate generates unstructured go types for resources defined in yaml
 // manifests
-func Generate(filename, varName string) (string, error) {
+func Generate(resourceYaml []byte, varName string) (string, error) {
 
-	manifestFile, _ := filepath.Abs(filename)
-	yamlFile, err := ioutil.ReadFile(manifestFile)
-	if err != nil {
-		return "", err
-	}
-
-	commentedYaml, err := captureComments(string(yamlFile))
+	commentedYaml, err := captureComments(string(resourceYaml))
 	if err != nil {
 		return "", err
 	}
