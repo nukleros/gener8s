@@ -1,0 +1,42 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: cert-manager-webhook #+workload:certManagerWebhookResourceName:default="cert-manager-webhook":type=string
+  labels:
+    app.kubernetes.io/name: cert-manager-webhook #+workload:certManagerWebhookResourceName:default="cert-manager-webhook":type=string
+    app.kubernetes.io/instance: cert-manager #+workload:certManagerResourceName:default="cert-manager":type=string
+  annotations:
+    cert-manager.io/inject-apiserver-ca: "true"
+    workload.cnr.vmware.com/resource-name: cert-manager-validating-webhook-config
+webhooks:
+  - name: webhook.cert-manager.io
+    namespaceSelector:
+      matchExpressions:
+        - key: "cert-manager.io/disable-validation"
+          operator: "NotIn"
+          values:
+            - "true"
+        - key: "name"
+          operator: "NotIn"
+          values:
+            - cert-manager #+workload:certManagerResourceName:default="cert-manager":type=string
+    rules:
+      - apiGroups:
+          - "cert-manager.io"
+        apiVersions: ["v1alpha2"]
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - certificates
+          - issuers
+          - clusterissuers
+          - certificaterequests
+    failurePolicy: Fail
+    sideEffects: None
+    clientConfig:
+      service:
+        name: kubernetes
+        namespace: default
+        path: /apis/webhook.cert-manager.io/v1beta1/validations
+

@@ -24,7 +24,7 @@ spec:
         command:
         - "/bin/sh"
         args:
-        - -c  # first value in array
+        - -c  #+workload:certManagerResourceName:default="cert-manager":type=string
         - while true; do ls; sleep 10; done  # second value in array
         securityContext:
           allowPrivilegeEscalation: false  # Here is a bool value

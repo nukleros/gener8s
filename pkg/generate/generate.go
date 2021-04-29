@@ -277,8 +277,30 @@ func containsComment(line string) bool {
 // sends the line contents to get the comment extracted
 func processComments(line string) (string, error) {
 
+	// for array value lines e.g. `- value # comment:with:colons`
+	// the line should not be split on the colon as it does not effectively
+	// split the line into keys and values
+	keyVal := true
+	colonEncountered := false
+	for _, char := range line {
+		if char == ':' {
+			colonEncountered = true
+		} else if char == '#' && colonEncountered == false {
+			keyVal = false
+			break
+		}
+	}
+
 	var commentEncodedLine string
-	keyValueArray := strings.Split(line, ":")
+	var keyValueArray []string
+
+	// only split on the colon for key value lines e.g. `foo: bar # comment`
+	if keyVal {
+		keyValueArray = strings.Split(line, ":")
+	} else {
+		keyValueArray = []string{line}
+	}
+
 	if len(keyValueArray) > 2 {
 		keyValueArray = processValueColons(keyValueArray)
 		commentEncodedLine = extractComment(keyValueArray)
