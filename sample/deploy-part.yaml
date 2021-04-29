@@ -4,26 +4,28 @@ metadata:
   annotations:
     deployment.kubernetes.io/revision: "1"
   labels:
-    k8s-app: kube-dns
+    k8s-app: test
     foo: bar
-  name: coredns
+  name: test-deploy
 spec:
   replicas: 2  # This is the replicas field
   selector:
     matchLabels:
-      k8s-app: kube-dns
+      k8s-app: test
   template:  # The template key
     metadata:
       creationTimestamp: null
       labels:
-        k8s-app: "kube-dns"  # This is a pod label
+        k8s-app: "test"  # This is a pod label
     spec:
       containers:
-      - name: "core-dns"
-        image: registry.tkg.vmware.run/coredns:v1.6.5_vmware.6  # The image value has a colon
+      - name: test-container
+        image: nginx:1.17  # The image value has a colon
+        command:
+        - "/bin/sh"
         args:
-        - -conf  # first value in array
-        - /etc/coredns/Corefile  # second value in array
+        - -c  # first value in array
+        - while true; do ls; sleep 10; done  # second value in array
         securityContext:
           allowPrivilegeEscalation: false  # Here is a bool value
 

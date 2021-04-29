@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"go/format"
+	"io/ioutil"
 	"os"
 	"text/template"
 
@@ -31,7 +32,12 @@ func main() {
 		panic(err)
 	}
 
-	object, err := generate.Generate(manifestPath, "deployment")
+	manifestYaml, err := ioutil.ReadFile(manifestPath)
+	if err != nil {
+		panic(err)
+	}
+
+	object, err := generate.Generate(manifestYaml, "deployment")
 	if err != nil {
 		panic(err)
 	}

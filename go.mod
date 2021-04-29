@@ -15,4 +15,3 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 )
 
-replace sigs.k8s.io/yaml => /Users/landerr/go/src/github.com/lander2k2/yaml

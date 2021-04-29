@@ -6,7 +6,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 TEST_OUTPUT ?= "/tmp/kocg-test.go"
-TEST_MANIFEST ?= "sample/deploy-part.yaml"
+TEST_MANIFEST ?= "sample/deploy.yaml"
 
 build:
 	go build -o kocg main.go
@@ -15,7 +15,7 @@ install: build
 	mv kocg $(GOBIN)
 
 test:
-	go run test.go -manifest $(TEST_MANIFEST) output $(TEST_OUTPUT)
+	go run test.go -manifest $(TEST_MANIFEST) -output $(TEST_OUTPUT)
 
 test.run: test
 	go run $(TEST_OUTPUT)
@@ -24,5 +24,5 @@ test.verify:
 	kubectl get deploy
 
 test.clean:
-	kubectl delete deploy coredns
+	kubectl delete -f $(TEST_MANIFEST)
 
