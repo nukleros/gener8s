@@ -16,7 +16,7 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        k8s-app: "test"  # This is a pod label
+        k8s-app: "test"  # This is a: pod label and: it has: lots of: colons with spaces
     spec:
       containers:
       - name: test-container

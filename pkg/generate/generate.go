@@ -103,42 +103,42 @@ func addElement(k string, v interface{}) *element {
 			ValType: "bool",
 			Key:     k,
 			Value:   strconv.FormatBool(v.(bool)),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Int:
 		elem = element{
 			ValType: "int",
 			Key:     k,
 			Value:   strconv.FormatInt(int64(v.(int)), 10),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Int8:
 		elem = element{
 			ValType: "int8",
 			Key:     k,
 			Value:   strconv.FormatInt(int64(v.(int8)), 10),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Int16:
 		elem = element{
 			ValType: "int16",
 			Key:     k,
 			Value:   strconv.FormatInt(int64(v.(int16)), 10),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Int32:
 		elem = element{
 			ValType: "int32",
 			Key:     k,
 			Value:   strconv.FormatInt(int64(v.(int32)), 10),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Int64:
 		elem = element{
 			ValType: "int64",
 			Key:     k,
 			Value:   strconv.FormatInt(v.(int64), 10),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Uint:
 		// unsupported
@@ -186,7 +186,7 @@ func addElement(k string, v interface{}) *element {
 		elem = element{
 			ValType: "map",
 			Key:     k,
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 		for key, value := range v.(map[string]interface{}) {
 			newElem := addElement(key, value)
@@ -203,7 +203,7 @@ func addElement(k string, v interface{}) *element {
 			elem = element{
 				ValType: "slice-strings",
 				Key:     k,
-				Comment: comment,
+				Comment: expandColonSpace(comment),
 			}
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
@@ -214,7 +214,7 @@ func addElement(k string, v interface{}) *element {
 			elem = element{
 				ValType: "slice-interfaces",
 				Key:     k,
-				Comment: comment,
+				Comment: expandColonSpace(comment),
 			}
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
@@ -231,7 +231,7 @@ func addElement(k string, v interface{}) *element {
 			ValType: "string",
 			Key:     k,
 			Value:   strings.Trim(val, " "),
-			Comment: comment,
+			Comment: expandColonSpace(comment),
 		}
 	case reflect.Struct:
 		// unsupported
@@ -337,6 +337,7 @@ func extractComment(lineArray []string) string {
 		value := lineArray[1]
 		commentArray := strings.Split(value, "#")
 		comment := commentArray[1]
+		comment = collapseColonSpace(comment)
 		comment = fmt.Sprintf("+comment(%s)", comment)
 		key = key + comment
 		lineContent = fmt.Sprintf("%s: %s", key, value)
@@ -345,11 +346,24 @@ func extractComment(lineArray []string) string {
 		lineContent = lineArray[0]
 		lineContentArray := strings.Split(lineContent, "#")
 		comment := lineContentArray[1]
+		comment = collapseColonSpace(comment)
 		comment = fmt.Sprintf("+comment(%s)", comment)
 		lineContent = fmt.Sprintf("%s%s", lineContentArray[0], comment)
 	}
 
 	return lineContent
+}
+
+// collapseColonSpace replaces ": " with ":~" so that yaml unmarshalling won't
+// interpret this as a yaml key-value pair
+func collapseColonSpace(input string) string {
+	return strings.Replace(input, ": ", ":~", -1)
+}
+
+// expandColonSpace does the opposite of collapseColonSpace - it replaces ":~"
+// with ": " to restore the original string post-yaml unmarshalling
+func expandColonSpace(input string) string {
+	return strings.Replace(input, ":~", ": ", -1)
 }
 
 // goComment pulls out the comments for Go source
