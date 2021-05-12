@@ -270,7 +270,13 @@ func captureComments(rawContent string) (string, error) {
 // TODO: be more intelligent about "#" marks inside keys or values that aren't
 // actually comments
 func containsComment(line string) bool {
-	return strings.Contains(line, "#")
+
+	if len(line) > 0 && strings.TrimLeft(line, " ")[:1] == "#" {
+		// first char is "#" a standalone comment - these get skipped
+		return false
+	} else {
+		return strings.Contains(line, "#")
+	}
 }
 
 // processComments splits a single line into its keys and values as needed, then

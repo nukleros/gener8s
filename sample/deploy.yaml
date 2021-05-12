@@ -4,7 +4,8 @@ metadata:
   annotations:
     deployment.kubernetes.io/revision: "1"
   labels:
-    k8s-app: test
+    # standalone comment
+    k8s-app: "test"
     foo: bar
   name: test-deploy
 spec:
