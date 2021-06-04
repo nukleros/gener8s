@@ -1,4 +1,4 @@
-# Kubernetes Object Code Generator
+# Object Code Generator for K8s
 
 Generate source code for unstructured Kubernetes Go types from yaml manifests.
 
@@ -20,7 +20,7 @@ package main
 import (
     "fmt"
 
-    "gitlab.eng.vmware.com/landerr/k8s-object-code-generator/pkg/generate"
+    "github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
 )
 
 func main() {

@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "gitlab.eng.vmware.com/landerr/k8s-object-code-generator/cmd"
+import "github.com/vmware-tanzu-labs/object-code-generator-for-k8s/cmd"
 
 func main() {
 	cmd.Execute()

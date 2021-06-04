@@ -8,7 +8,7 @@ import (
 	"os"
 	"text/template"
 
-	"gitlab.eng.vmware.com/landerr/k8s-object-code-generator/pkg/generate"
+	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
 )
 
 var manifestFile string
