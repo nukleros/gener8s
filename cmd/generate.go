@@ -24,7 +24,6 @@ var generateCmd = &cobra.Command{
 	Long: `Pass a manifest file that contains valid yaml for any Kubernetes
 object and get source code for an unstructured Kubernetes object type.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		manifestFile, err := filepath.Abs(manifestFilepath)
 		if err != nil {
 			panic(err)

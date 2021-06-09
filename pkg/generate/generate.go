@@ -4,7 +4,6 @@ package generate
 
 import (
 	"bytes"
-	//"encoding/json"
 	"fmt"
 	"go/format"
 	"reflect"
@@ -31,9 +30,8 @@ type object struct {
 }
 
 // Generate generates unstructured go types for resources defined in yaml
-// manifests
+// manifests.
 func Generate(resourceYaml []byte, varName string) (string, error) {
-
 	commentedYaml, err := captureComments(string(resourceYaml))
 	if err != nil {
 		return "", err
@@ -53,12 +51,12 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 		obj.Elements = append(obj.Elements, *elem)
 	}
 
-	//// display json representation of struct for debugging
-	//objJson, err := json.MarshalIndent(obj, ``, `  `)
-	//if err != nil {
+	// display json representation of struct for debugging
+	// objJson, err := json.MarshalIndent(obj, ``, `  `)
+	// if err != nil {
 	//	return "", err
-	//}
-	//fmt.Println(string(objJson))
+	// }
+	// fmt.Println(string(objJson))
 
 	t, err := template.New("objectTemplate").Parse(objTemplate)
 	if err != nil {
@@ -66,7 +64,9 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 	}
 
 	var buf bytes.Buffer
-	if err = t.Execute(&buf, obj); err != nil {
+
+	err = t.Execute(&buf, obj)
+	if err != nil {
 		return "", err
 	}
 
@@ -79,7 +79,6 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 }
 
 func addElement(k string, v interface{}) *element {
-
 	var elem element
 
 	var comment string
@@ -93,8 +92,10 @@ func addElement(k string, v interface{}) *element {
 			Key:     k,
 			Value:   "nil",
 		}
+
 		return &elem
 	}
+
 	rt := reflect.TypeOf(v)
 	switch rt.Kind() {
 	case reflect.Invalid:
@@ -190,6 +191,7 @@ func addElement(k string, v interface{}) *element {
 			Key:     k,
 			Comment: expandColonSpace(comment),
 		}
+
 		for key, value := range v.(map[string]interface{}) {
 			newElem := addElement(key, value)
 			elem.Elements = append(elem.Elements, *newElem)
@@ -199,6 +201,7 @@ func addElement(k string, v interface{}) *element {
 		fmt.Println("Ptr")
 	case reflect.Slice:
 		sliceVal := v.([]interface{})[0]
+
 		srt := reflect.TypeOf(sliceVal)
 		switch srt.Kind() {
 		case reflect.String:
@@ -207,6 +210,7 @@ func addElement(k string, v interface{}) *element {
 				Key:     k,
 				Comment: expandColonSpace(comment),
 			}
+
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
 				parentElem.Parent = true
@@ -218,6 +222,7 @@ func addElement(k string, v interface{}) *element {
 				Key:     k,
 				Comment: expandColonSpace(comment),
 			}
+
 			for _, i := range v.([]interface{}) {
 				parentElem := addElement("parent", i)
 				parentElem.Parent = true
@@ -229,6 +234,7 @@ func addElement(k string, v interface{}) *element {
 		if strings.Contains(val, "+comment") {
 			val, comment = goComment(val)
 		}
+
 		elem = element{
 			ValType: "string",
 			Key:     k,
@@ -250,16 +256,16 @@ func addElement(k string, v interface{}) *element {
 }
 
 // captureComments captures the comment and adds it to the key so that it is not
-// lost during yaml unmarshalling
+// lost during yaml unmarshalling.
 func captureComments(rawContent string) (string, error) {
-
-	lines := strings.Split(string(rawContent), "\n")
+	lines := strings.Split(rawContent, "\n")
 	for i, line := range lines {
 		if containsComment(line) {
 			commentedLine, err := processComments(line)
 			if err != nil {
 				return "", err
 			}
+
 			lines[i] = commentedLine
 		}
 	}
@@ -270,36 +276,38 @@ func captureComments(rawContent string) (string, error) {
 // containsComment returns true if there's a comment that is not a part of any
 // key or value
 // TODO: be more intelligent about "#" marks inside keys or values that aren't
-// actually comments
+// actually comments.
 func containsComment(line string) bool {
-
 	if len(line) > 0 && strings.TrimLeft(line, " ")[:1] == "#" {
 		// first char is "#" a standalone comment - these get skipped
 		return false
-	} else {
-		return strings.Contains(line, "#")
 	}
+
+	return strings.Contains(line, "#")
 }
 
 // processComments splits a single line into its keys and values as needed, then
-// sends the line contents to get the comment extracted
+// sends the line contents to get the comment extracted.
 func processComments(line string) (string, error) {
-
 	// for array value lines e.g. `- value # comment:with:colons`
 	// the line should not be split on the colon as it does not effectively
 	// split the line into keys and values
 	keyVal := true
+
 	colonEncountered := false
+
 	for _, char := range line {
 		if char == ':' {
 			colonEncountered = true
-		} else if char == '#' && colonEncountered == false {
+		} else if char == '#' && !colonEncountered {
 			keyVal = false
+
 			break
 		}
 	}
 
 	var commentEncodedLine string
+
 	var keyValueArray []string
 
 	// only split on the colon for key value lines e.g. `foo: bar # comment`
@@ -315,14 +323,15 @@ func processComments(line string) (string, error) {
 	} else {
 		commentEncodedLine = extractComment(keyValueArray)
 	}
+
 	return commentEncodedLine, nil
 }
 
 // processValueColons accounts for colons in values once line is split to
-// extract keys and values
+// extract keys and values.
 func processValueColons(lineArray []string) []string {
-
 	var value string
+
 	for i, v := range lineArray {
 		if i == 1 {
 			value = v
@@ -335,10 +344,10 @@ func processValueColons(lineArray []string) []string {
 }
 
 // extractComment splits around the comment symbol and adds the comment to the
-// key
+// key.
 func extractComment(lineArray []string) string {
-
 	var lineContent string
+
 	if len(lineArray) > 1 {
 		// key value pair OR key without value
 		key := lineArray[0]
@@ -347,7 +356,7 @@ func extractComment(lineArray []string) string {
 		comment := commentArray[1]
 		comment = collapseColonSpace(comment)
 		comment = fmt.Sprintf("+comment(%s)", comment)
-		key = key + comment
+		key += comment
 		lineContent = fmt.Sprintf("%s: %s", key, value)
 	} else {
 		// no colon, e.g. array value
@@ -363,20 +372,19 @@ func extractComment(lineArray []string) string {
 }
 
 // collapseColonSpace replaces ": " with ":~" so that yaml unmarshalling won't
-// interpret this as a yaml key-value pair
+// interpret this as a yaml key-value pair.
 func collapseColonSpace(input string) string {
 	return strings.Replace(input, ": ", ":~", -1)
 }
 
 // expandColonSpace does the opposite of collapseColonSpace - it replaces ":~"
-// with ": " to restore the original string post-yaml unmarshalling
+// with ": " to restore the original string post-yaml unmarshalling.
 func expandColonSpace(input string) string {
 	return strings.Replace(input, ":~", ": ", -1)
 }
 
-// goComment pulls out the comments for Go source
+// goComment pulls out the comments for Go source.
 func goComment(key string) (string, string) {
-
 	splitKey := strings.Split(key, "(")
 	comment := strings.TrimSuffix(splitKey[1], ")")
 	k := strings.TrimSuffix(splitKey[0], "+comment")
