@@ -1,3 +1,8 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/vmware-tanzu-labs/object-code-generator-for-k8s.svg)](https://pkg.go.dev/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/vmware-tanzu-labs/object-code-generator-for-k8s)](https://golang.org/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)](https://goreportcard.com/report/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)
+[![GitHub](https://img.shields.io/github/license/vmware-tanzu-labs/object-code-generator-for-k8s)](https://github.com/vmware-tanzu-labs/object-code-generator-for-k8s/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/vmware-tanzu-labs/object-code-generator-for-k8s)](https://github.com/vmware-tanzu-labs/object-code-generator-for-k8s/releases)
 # Object Code Generator for K8s
 
 Generate source code for unstructured Kubernetes Go types from yaml manifests.
