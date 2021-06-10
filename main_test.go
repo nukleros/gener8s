@@ -1,4 +1,6 @@
-package main
+// Copyright 2021 VMware, Inc.
+// SPDX-License-Identifier: MIT
+package main_test
 
 import (
 	"bytes"
@@ -6,6 +8,7 @@ import (
 	"go/format"
 	"io/ioutil"
 	"os"
+	"testing"
 	"text/template"
 
 	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
@@ -17,44 +20,43 @@ type source struct {
 	Object string
 }
 
-func main() {
-
+func Test_main(t *testing.T) {
 	var manifestPath string
 	var outputPath string
 
-	flag.StringVar(&manifestPath, "manifest", "sample/deploy-part.yaml", "path to resource manifest")
+	flag.StringVar(&manifestPath, "manifest", "sample/deploy.yaml", "path to resource manifest")
 	flag.StringVar(&outputPath, "output", "/tmp/kocg-test.go", "path to output go source code")
 
 	flag.Parse()
 
-	t, err := template.New("testTemplate").Parse(testTemplate)
+	tpl, err := template.New("testTemplate").Parse(testTemplate)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	manifestYaml, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	object, err := generate.Generate(manifestYaml, "deployment")
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	src := source{Object: object}
 	var buf bytes.Buffer
-	if err = t.Execute(&buf, src); err != nil {
-		panic(err)
+	if err = tpl.Execute(&buf, src); err != nil {
+		t.Fatal(err)
 	}
 	fileSource, err := format.Source(buf.Bytes())
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	f, err := os.Create(outputPath)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	defer f.Close()
 
@@ -81,11 +83,11 @@ func main() {
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	namespace := "default"
@@ -96,7 +98,7 @@ func main() {
 
 	result, err := client.Resource(deploymentRes).Namespace(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	fmt.Printf("Created deployment %q.\n", result.GetName())
 }
