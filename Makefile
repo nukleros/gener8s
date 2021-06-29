@@ -9,13 +9,13 @@ TEST_OUTPUT ?= "/tmp/ocgk-test.go"
 TEST_MANIFEST ?= "sample/deploy.yaml"
 
 build:
-	go build -o ocgk main.go
+	go build ./cmd/ocgk
 
 install: build
 	mv ocgk $(GOBIN)
 
 test:
-	go test -args -manifest=$(TEST_MANIFEST) -output=$(TEST_OUTPUT)
+	go test ./cmd/ocgk -args -manifest=../../$(TEST_MANIFEST) -output=$(TEST_OUTPUT)
 
 test.run: test
 	go run $(TEST_OUTPUT)

@@ -55,7 +55,7 @@ make install
 Generate object source code from a yaml manifest:
 
 ```bash
-kocg generate --manifest-file path/to/manifest.yaml --variable-name varName
+ocgk generate --manifest-file path/to/manifest.yaml --variable-name varName
 ```
 
 ## Testing

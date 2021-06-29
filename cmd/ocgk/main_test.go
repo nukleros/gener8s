@@ -41,10 +41,13 @@ func Test_main(t *testing.T) {
 	}
 
 	src := source{Object: object}
+
 	var buf bytes.Buffer
+
 	if err = tpl.Execute(&buf, src); err != nil {
 		t.Fatal(err)
 	}
+
 	fileSource, err := format.Source(buf.Bytes())
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +59,10 @@ func Test_main(t *testing.T) {
 	}
 	defer f.Close()
 
-	f.Write(fileSource)
+	_, err = f.Write(fileSource)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 const testTemplate = `
