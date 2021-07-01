@@ -25,6 +25,7 @@ type element struct {
 type object struct {
 	VarName  string
 	Elements elements
+	Source   string
 }
 
 type elements []element
@@ -84,9 +85,10 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 	obj := object{
 		VarName:  varName,
 		Elements: unstructuredObj[0].Elements,
+		Source:   string(resourceYaml),
 	}
 
-	t, err := template.New("objectTemplate").Funcs(template.FuncMap(sprig.FuncMap())).Parse(objTemplate)
+	t, err := template.New("objectTemplate").Funcs(funcMap()).Parse(objTemplate)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse template, %w", err)
 	}
@@ -106,6 +108,25 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 	return string(objSource), nil
 }
 
+func escape(str string) string {
+	if strings.Contains(str, "\n") {
+		str = strings.ReplaceAll(str, "`", "` + \"`\" + `")
+
+		return "`" + str + "`,"
+	}
+
+	str = strings.ReplaceAll(str, `"`, `\"`)
+
+	return `"` + str + `",`
+}
+
+func funcMap() template.FuncMap {
+	f := sprig.TxtFuncMap()
+	f["escape"] = escape
+
+	return f
+}
+
 const objTemplate = `
 var {{ .VarName }} = &unstructured.Unstructured{
 	Object: map[string]interface{}{
@@ -116,28 +137,22 @@ var {{ .VarName }} = &unstructured.Unstructured{
 {{- define "element" }}
 	{{- range . }}
 		{{- if eq .Type "!!null" }}
-			"{{ .Key }}": nil,
-		{{- else if eq .Type "!!bool" }}
-			"{{ .Key }}": {{ .Value -}},  {{ if .Comment }}// {{ .Comment }}{{ end }}
+			{{- if ne .IsSeq true }}
+				"{{ .Key }}": nil,
+			{{- else }}
+				"nil,
+			{{- end }}
+		{{- else if  or (eq .Type "!!bool") (eq .Type "!!int") }}
+			{{- if ne .IsSeq true }}
+				"{{ .Key }}": {{ .Value -}},  {{ if .Comment }}// {{ .Comment }}{{ end }}
+			{{- else }}
+				{{ .Value -}},  {{ if .Comment }}// {{ .Comment }}{{ end }}
+			{{- end }}
 		{{- else if eq .Type "!!str" }}
 			{{- if ne .IsSeq true }}
-				{{- if contains "\n" .Value }}
-					"{{ .Key }}": ` + "`{{ .Value -}}`" + `,  {{ if .Comment }}// {{ .Comment }}{{ end }}
-				{{- else }}
-					"{{ .Key }}": "{{ .Value -}}",  {{ if .Comment }}// {{ .Comment }}{{ end }}
-				{{- end }}
+				"{{ .Key }}": {{ escape .Value -}}  {{ if .Comment }}// {{ .Comment }}{{ end }}
 			{{- else }}
-				{{- if contains "\n" .Value }}
-					` + "`{{ .Value -}}`" + `,  {{ if .Comment }}// {{ .Comment }}{{ end }}
-				{{- else }}
-					"{{ .Value -}}",  {{ if .Comment }}// {{ .Comment }}{{ end }}
-				{{- end }}
-			{{- end }}
-		{{- else if eq .Type "!!int" }}
-			{{- if ne .IsSeq true }}
-				"{{ .Key }}": int({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
-			{{- else }}
-				int({{ .Value -}}),  {{ if .Comment }}// {{ .Comment }}{{ end }}
+				{{ escape .Value -}}  {{ if .Comment }}// {{ .Comment }}{{ end }}
 			{{- end }}
 		{{- else if eq .Type "!!map" }}
 			{{- if ne .IsSeq true }}

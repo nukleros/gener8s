@@ -9,8 +9,8 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
-			"program": "${workspaceFolder}/main.go",
-			"args": ["generate", "-m", "sample/crd.yaml", "-v", "test"],
+			"program": "${workspaceFolder}/cmd/ocgk",
+			"args": ["generate", "-m", "sample/deploy.yaml", "-v", "test"],
 			"cwd": "${workspaceFolder}"
 		}
 	]

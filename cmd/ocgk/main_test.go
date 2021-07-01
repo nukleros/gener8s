@@ -14,16 +14,18 @@ import (
 	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
 )
 
-var manifestFile string
-
-var manifestPath = flag.String("manifest", "sample/deploy.yaml", "path to resource manifest")
-var outputPath = flag.String("output", "/tmp/kocg-test.go", "path to output go source code")
+//nolint: gochecknoglobals
+var (
+	manifestPath = flag.String("manifest", "../../sample/deploy.yaml", "path to resource manifest")
+	outputPath   = flag.String("output", "/tmp/kocg-test.go", "path to output go source code")
+)
 
 type source struct {
 	Object string
 }
 
 func Test_main(t *testing.T) {
+	t.Parallel()
 
 	tpl, err := template.New("testTemplate").Parse(testTemplate)
 	if err != nil {
