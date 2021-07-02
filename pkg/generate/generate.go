@@ -109,7 +109,7 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 }
 
 func escape(str string) string {
-	if strings.Contains(str, "\n") {
+	if strings.ContainsAny(str, "\n"+`\`) {
 		str = strings.ReplaceAll(str, "`", "` + \"`\" + `")
 
 		return "`" + str + "`,"
