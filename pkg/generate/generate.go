@@ -160,7 +160,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- if ne .IsSeq true }}
 				"{{ .Key }}": nil,
 			{{- else }}
-				"nil,
+				nil,
 			{{- end }}
 		{{- else if  or (eq .Type "!!bool") (eq .Type "!!int") }}
 			{{- if ne .IsSeq true }}
@@ -178,24 +178,14 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- if ne .IsSeq true }}
 				"{{ .Key }}": map[string]interface{}{  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- else }}
-				{
+				map[string]interface{}{ {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
 				{{- template "element" .Elements }}
 			},
 		{{- else if eq .Type "!!seq" }}
-			{{- if not .Elements }}
-			    "{{ .Key }}": nil,
-			{{- else }}
-				{{- if eq (index .Elements 0).Type "!!map" }}
-					"{{ .Key }}": []map[string]interface{}{
-						{{- template "element" .Elements }}
-					},
-				{{- else }}
-					"{{ .Key }}": []interface{}{
-						{{- template "element" .Elements }}
-					},
-				{{- end }}
-			{{- end }}
+			"{{ .Key }}": []interface{}{
+				{{- template "element" .Elements }}
+			},
 		{{- end }}
 		{{- if .FootComment }}
 		{{ .FootComment }}
