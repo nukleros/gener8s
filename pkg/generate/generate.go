@@ -4,6 +4,7 @@ package generate
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/format"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"gopkg.in/yaml.v3"
 )
+
+var ErrTooManyValues = errors.New("only one value struct is allowed")
 
 type element struct {
 	Type        string
@@ -91,7 +94,11 @@ func (e *elements) decodeElements(factor int, value ...*yaml.Node) {
 
 // Generate generates unstructured go types for resources defined in yaml
 // manifests.
-func Generate(resourceYaml []byte, varName string) (string, error) {
+func Generate(resourceYaml []byte, varName string, values ...interface{}) (string, error) {
+	if len(values) > 1 {
+		return "", ErrTooManyValues
+	}
+
 	unstructuredObj := elements{}
 
 	err := yaml.Unmarshal(resourceYaml, &unstructuredObj)
@@ -105,7 +112,7 @@ func Generate(resourceYaml []byte, varName string) (string, error) {
 		Source:   string(resourceYaml),
 	}
 
-	t, err := template.New("objectTemplate").Funcs(funcMap()).Parse(objTemplate)
+	t, err := template.New("objectTemplate").Funcs(funcMap(values[0])).Parse(objTemplate)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse template, %w", err)
 	}
@@ -129,17 +136,35 @@ func escape(str string) string {
 	if strings.ContainsAny(str, "\n"+`\`) {
 		str = strings.ReplaceAll(str, "`", "` + \"`\" + `")
 
-		return "`" + str + "`,"
+		return "`" + str + "`"
 	}
 
 	str = strings.ReplaceAll(str, `"`, `\"`)
 
-	return `"` + str + `",`
+	return `"` + str + `"`
 }
 
-func funcMap() template.FuncMap {
+func handleNestedTemplates(values interface{}) func(str string) (string, error) {
+	return func(str string) (string, error) {
+		var buf bytes.Buffer
+
+		t, err := template.New(str).Parse(str)
+		if err != nil {
+			return "", fmt.Errorf("%w", err)
+		}
+
+		if err := t.Execute(&buf, values); err != nil {
+			return "", fmt.Errorf("%w", err)
+		}
+
+		return buf.String(), nil
+	}
+}
+
+func funcMap(value interface{}) template.FuncMap {
 	f := sprig.TxtFuncMap()
 	f["escape"] = escape
+	f["interpolate"] = handleNestedTemplates(value)
 
 	return f
 }
@@ -154,7 +179,11 @@ var {{ .VarName }} = &unstructured.Unstructured{
 {{- define "element" }}
 	{{- range . }}
 		{{- if .HeadComment }}
-		{{ .HeadComment }}
+			{{- if eq .Type "!!tpl" }}
+				{{ interpolate .HeadComment }}
+			{{- else }}
+				{{ .HeadComment }}
+			{{- end }}
 		{{- end }}
 		{{- if eq .Type "!!null" }}
 			{{- if ne .IsSeq true }}
@@ -170,10 +199,17 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- end }}
 		{{- else if eq .Type "!!str" }}
 			{{- if ne .IsSeq true }}
-				"{{ .Key }}": {{ escape .Value -}}  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+				"{{ .Key }}": {{ escape .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- else }}
-				{{ escape .Value -}}  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+				{{ escape .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
+		{{- else if eq .Type "!!tpl" }}
+			{{- if ne .IsSeq true }}
+				"{{ interpolate .Key }}": {{ interpolate .Value -}},  {{ if .LineComment }}// {{ interpolate .LineComment }}{{ end }}
+			{{- else }}
+				{{ interpolate .Value -}},  {{ if .LineComment }}// {{ interpolate .LineComment }}{{ end }}
+			{{- end }}
+
 		{{- else if eq .Type "!!map" }}
 			{{- if ne .IsSeq true }}
 				"{{ .Key }}": map[string]interface{}{  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
@@ -188,7 +224,11 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			},
 		{{- end }}
 		{{- if .FootComment }}
-		{{ .FootComment }}
+			{{- if eq .Type "!!tpl" }}
+				{{ interpolate .FootComment }}
+			{{- else }}
+				{{ .FootComment }}
+			{{- end }}
 		{{- end }}
 	{{- end }}
 {{- end }}

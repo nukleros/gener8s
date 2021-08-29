@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: !!tpl '{{ .Name }}'
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: webstore
+    template:
+        metadata:
+            labels:
+                app: !!tpl '{{ .Label }}'
+        spec:
+            containers:
+              - name: webstore-container
+                image: !!tpl '{{ .Image }}'
+                ports:
+                  - containerPort: 8080

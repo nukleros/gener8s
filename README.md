@@ -58,6 +58,85 @@ Generate object source code from a yaml manifest:
 ocgk generate --manifest-file path/to/manifest.yaml --variable-name varName
 ```
 
+
+## Templating
+
+you can also resolve templating within the manifest for fields with a special !!tpl yaml tag, values may be given via the optional values parameter or with the -f flag when using the cli. this can be useful when dealing with multiple layers of code generatation, or for generating code with variable references.
+
+manifest: 
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: !!tpl '{{ .Name }}'
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: webstore
+    template:
+        metadata:
+            labels:
+                app: !!tpl '{{ .Label }}'
+        spec:
+            containers:
+              - name: webstore-container
+                image: !!tpl '{{ .Image }}'
+                ports:
+                  - containerPort: 8080
+```
+
+values file
+```yaml
+Name: nameVariable
+Label: appLabel
+Image: variable.With.Image.Value
+```
+
+will produce
+
+```go
+var test = &unstructured.Unstructured{
+	Object: map[string]interface{}{
+		"apiVersion": "apps/v1",
+		"kind":       "Deployment",
+		"metadata": map[string]interface{}{
+			"name": nameVariable,
+		},
+		"spec": map[string]interface{}{
+			"replicas": 2,
+			"selector": map[string]interface{}{
+				"matchLabels": map[string]interface{}{
+					"app": "webstore",
+				},
+			},
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"labels": map[string]interface{}{
+						"app": appLabel,
+					},
+				},
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "webstore-container",
+							"image": variable.With.Image.Value,
+							"ports": []interface{}{
+								map[string]interface{}{
+									"containerPort": 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+}
+```
+
+* When using the !!tpl tag you will need to provide quotes yourself if the resulting value is a string
+
 ## Testing
 
 Testing changes to this project involves generating source code for a deployment
