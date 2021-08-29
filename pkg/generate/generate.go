@@ -97,12 +97,24 @@ func (e *elements) decodeElements(factor int, value ...*yaml.Node) {
 func Generate(resourceYaml []byte, varName string, values ...interface{}) (string, error) {
 	if len(values) > 1 {
 		return "", ErrTooManyValues
+	} else if len(values) == 1 {
+		yamlTemplate, err := template.New("yamlFile").Parse(string(resourceYaml))
+		if err != nil {
+			return "", fmt.Errorf("unable to parse template in yaml file, %w", err)
+		}
+
+		var yamlBuf bytes.Buffer
+
+		if err := yamlTemplate.Execute(&yamlBuf, values[0]); err != nil {
+			return "", fmt.Errorf("unable to resolve templating in yaml file, %w", err)
+		}
+
+		resourceYaml = yamlBuf.Bytes()
 	}
 
 	unstructuredObj := elements{}
 
-	err := yaml.Unmarshal(resourceYaml, &unstructuredObj)
-	if err != nil {
+	if err := yaml.Unmarshal(resourceYaml, &unstructuredObj); err != nil {
 		return "", fmt.Errorf("unable to unmarshal input yaml, %w", err)
 	}
 
@@ -112,7 +124,7 @@ func Generate(resourceYaml []byte, varName string, values ...interface{}) (strin
 		Source:   string(resourceYaml),
 	}
 
-	t, err := template.New("objectTemplate").Funcs(funcMap(values[0])).Parse(objTemplate)
+	t, err := template.New("objectTemplate").Funcs(funcMap()).Parse(objTemplate)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse template, %w", err)
 	}
@@ -144,27 +156,9 @@ func escape(str string) string {
 	return `"` + str + `"`
 }
 
-func handleNestedTemplates(values interface{}) func(str string) (string, error) {
-	return func(str string) (string, error) {
-		var buf bytes.Buffer
-
-		t, err := template.New(str).Parse(str)
-		if err != nil {
-			return "", fmt.Errorf("%w", err)
-		}
-
-		if err := t.Execute(&buf, values); err != nil {
-			return "", fmt.Errorf("%w", err)
-		}
-
-		return buf.String(), nil
-	}
-}
-
-func funcMap(value interface{}) template.FuncMap {
+func funcMap() template.FuncMap {
 	f := sprig.TxtFuncMap()
 	f["escape"] = escape
-	f["interpolate"] = handleNestedTemplates(value)
 
 	return f
 }
@@ -179,11 +173,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 {{- define "element" }}
 	{{- range . }}
 		{{- if .HeadComment }}
-			{{- if eq .Type "!!tpl" }}
-				{{ interpolate .HeadComment }}
-			{{- else }}
-				{{ .HeadComment }}
-			{{- end }}
+			{{ .HeadComment }}
 		{{- end }}
 		{{- if eq .Type "!!null" }}
 			{{- if ne .IsSeq true }}
@@ -203,11 +193,11 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- else }}
 				{{ escape .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
-		{{- else if eq .Type "!!tpl" }}
+		{{- else if eq .Type "!!var" }}
 			{{- if ne .IsSeq true }}
-				"{{ interpolate .Key }}": {{ interpolate .Value -}},  {{ if .LineComment }}// {{ interpolate .LineComment }}{{ end }}
+				"{{ .Key }}": {{ .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- else }}
-				{{ interpolate .Value -}},  {{ if .LineComment }}// {{ interpolate .LineComment }}{{ end }}
+				{{ .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
 
 		{{- else if eq .Type "!!map" }}
@@ -224,11 +214,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			},
 		{{- end }}
 		{{- if .FootComment }}
-			{{- if eq .Type "!!tpl" }}
-				{{ interpolate .FootComment }}
-			{{- else }}
-				{{ .FootComment }}
-			{{- end }}
+			{{ .FootComment }}
 		{{- end }}
 	{{- end }}
 {{- end }}

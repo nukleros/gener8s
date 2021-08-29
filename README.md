@@ -61,35 +61,43 @@ ocgk generate --manifest-file path/to/manifest.yaml --variable-name varName
 
 ## Templating
 
-you can also resolve templating within the manifest for fields with a special !!tpl yaml tag, values may be given via the optional values parameter or with the -f flag when using the cli. this can be useful when dealing with multiple layers of code generatation, or for generating code with variable references.
+you can also resolve templating within the manifests, values may be given via the optional values parameter or with the -f flag when using the cli. this can be useful when dealing with multiple layers of code generatation, or for generating code with variable references.
+
+## Variables
+
+sometimes you may want to generate code with variable references, to tell the generator a value is a variable my may use a special !!var tag on that value
+
+## Example
+
+in this example we will combine both templating and variables however neither is required for the other one to work.
 
 manifest: 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: !!tpl '{{ .Name }}'
+    name: '{{ .Name }}'
 spec:
     replicas: 2
     selector:
         matchLabels:
-            app: webstore
+            app: !!var webstoreLabel
     template:
         metadata:
             labels:
-                app: !!tpl '{{ .Label }}'
+                app: !!var '{{ .Label }}'
         spec:
             containers:
               - name: webstore-container
-                image: !!tpl '{{ .Image }}'
+                image: !!var '{{ .Image }}'
                 ports:
                   - containerPort: 8080
 ```
 
 values file
 ```yaml
-Name: nameVariable
-Label: appLabel
+Name: MyName
+Label: webstoreLabel
 Image: variable.With.Image.Value
 ```
 
@@ -101,19 +109,19 @@ var test = &unstructured.Unstructured{
 		"apiVersion": "apps/v1",
 		"kind":       "Deployment",
 		"metadata": map[string]interface{}{
-			"name": nameVariable,
+			"name": "MyName",
 		},
 		"spec": map[string]interface{}{
 			"replicas": 2,
 			"selector": map[string]interface{}{
 				"matchLabels": map[string]interface{}{
-					"app": "webstore",
+					"app": webstoreLabel,
 				},
 			},
 			"template": map[string]interface{}{
 				"metadata": map[string]interface{}{
 					"labels": map[string]interface{}{
-						"app": appLabel,
+						"app": webstoreLabel,
 					},
 				},
 				"spec": map[string]interface{}{
@@ -134,8 +142,6 @@ var test = &unstructured.Unstructured{
 	},
 }
 ```
-
-* When using the !!tpl tag you will need to provide quotes yourself if the resulting value is a string
 
 ## Testing
 

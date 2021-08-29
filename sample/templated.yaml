@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: !!tpl '{{ .Name }}'
+    name: !!var '{{ .Name }}'
 spec:
     replicas: 2
     selector:
@@ -10,10 +10,10 @@ spec:
     template:
         metadata:
             labels:
-                app: !!tpl '{{ .Label }}'
+                app: !!var '{{ .Label }}'
         spec:
             containers:
               - name: webstore-container
-                image: !!tpl '{{ .Image }}'
+                image: !!var '{{ .Image }}'
                 ports:
                   - containerPort: 8080

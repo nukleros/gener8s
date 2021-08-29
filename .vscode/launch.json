@@ -10,7 +10,7 @@
 			"request": "launch",
 			"mode": "auto",
 			"program": "${workspaceFolder}/cmd/ocgk",
-			"args": ["generate", "-m", "sample/deploy.yaml", "-v", "test"],
+			"args": ["generate", "-m", "sample/templated.yaml", "-v", "test", "-f", "sample/values.yaml" ],
 			"cwd": "${workspaceFolder}"
 		}
 	]
