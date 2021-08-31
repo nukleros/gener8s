@@ -24,13 +24,19 @@ package main
 
 import (
     "fmt"
+    "io/ioutil"
 
     "github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
 )
 
 func main() {
 
-    object, err := generate.Generate("path/to/manifest.yaml", "varName")
+    manifestYaml, err := ioutil.ReadFile("path/to/yaml/file")
+    if err != nil {
+        panic(err)
+    }
+
+    object, err := generate.Generate(manifestYaml, "varName")
     if err != nil {
         panic(err)
     }
@@ -39,8 +45,8 @@ func main() {
 }
 ```
 
-See `test.go` for a more complete example that uses templating to create a Go
-program that will create a Kubernetes deployment resources.
+See `cmd/ocgk/main_test.go` for a more complete example that uses templating to create a Go
+program that will create a Kubernetes deployment resource in a cluster.
 
 ## Command Line Interface
 
@@ -61,47 +67,55 @@ ocgk generate --manifest-file path/to/manifest.yaml --variable-name varName
 
 ## Templating
 
-you can also resolve templating within the manifests, values may be given via the optional values parameter or with the -f flag when using the cli. this can be useful when dealing with multiple layers of code generatation, or for generating code with variable references.
+You can also resolve templating within the manifests, values may be given via
+the optional values parameter or with the -f flag when using the CLI. This can
+be useful when dealing with multiple layers of code generatation, or for
+generating code with variable references.
 
-## Variables
+## Variable References
 
-sometimes you may want to generate code with variable references, to tell the generator a value is a variable my may use a special !!var tag on that value
+Sometimes you may want to generate code with variable references. To tell the
+generator a value is a variable, you may use a special `!!var` tag on that value.
 
 ## Example
 
-in this example we will combine both templating and variables however neither is required for the other one to work.
+in this example we will combine both templating and variables.  Note that both
+templating and variable features are optional.  They can be used independently,
+together, or not at all.
 
-manifest: 
+Example manifest:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: '{{ .Name }}'
+    name: '{{ .Name }}'  # template variable
 spec:
     replicas: 2
     selector:
         matchLabels:
-            app: !!var webstoreLabel
+            app: !!var webstoreLabel  # variable reference
     template:
         metadata:
             labels:
-                app: !!var '{{ .Label }}'
+                app: !!var '{{ .Label }}'  # templated variable reference
         spec:
             containers:
               - name: webstore-container
-                image: !!var '{{ .Image }}'
+                image: !!var '{{ .Image }}'  # templated variable reference
                 ports:
                   - containerPort: 8080
 ```
 
-values file
+Example values file:
+
 ```yaml
 Name: MyName
 Label: webstoreLabel
 Image: variable.With.Image.Value
 ```
 
-will produce
+This manifest and values file will produce:
 
 ```go
 var test = &unstructured.Unstructured{
