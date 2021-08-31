@@ -3,11 +3,13 @@
 package command
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
 )
@@ -15,6 +17,7 @@ import (
 type Options struct {
 	manifestFilepath string
 	variableName     string
+	valuesFilePath   string
 }
 
 // GenerateCommand creates the generate subcommand.
@@ -24,23 +27,38 @@ func (r *Root) GenerateCommand() *cobra.Command {
 		Short: "Generate Go source code for Kubernetes object from yaml",
 		Long: `Pass a manifest file that contains valid yaml for any Kubernetes
 object and get source code for an unstructured Kubernetes object type.`,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestFile, err := filepath.Abs(r.Options.manifestFilepath)
 			if err != nil {
-				panic(err)
+				return fmt.Errorf("%w", err)
 			}
 
 			yamlContent, err := ioutil.ReadFile(manifestFile)
 			if err != nil {
-				panic(err)
+				return fmt.Errorf("%w", err)
 			}
 
-			source, err := generate.Generate(yamlContent, r.Options.variableName)
+			var values map[string]interface{}
+
+			if r.Options.valuesFilePath != "" {
+				valuesFile, vErr := ioutil.ReadFile(r.Options.valuesFilePath)
+				if err != nil {
+					return fmt.Errorf("%w", vErr)
+				}
+
+				if vErr := yaml.Unmarshal(valuesFile, &values); err != nil {
+					return fmt.Errorf("%w", vErr)
+				}
+			}
+
+			source, err := generate.Generate(yamlContent, r.Options.variableName, values)
 			if err != nil {
-				panic(err)
+				return fmt.Errorf("%w", err)
 			}
 
 			os.Stdout.WriteString(source)
+
+			return nil
 		},
 	}
 
@@ -58,6 +76,14 @@ object and get source code for an unstructured Kubernetes object type.`,
 		"v",
 		"object",
 		"variable name for resource object",
+	)
+
+	generateCmd.Flags().StringVarP(
+		&r.Options.valuesFilePath,
+		"values-file",
+		"f",
+		"",
+		"yaml file with values to insert into fields with !!tpl tags",
 	)
 
 	cobra.CheckErr(generateCmd.MarkFlagRequired("manifest-file"))

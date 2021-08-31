@@ -4,6 +4,7 @@ package generate
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/format"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"gopkg.in/yaml.v3"
 )
+
+var ErrTooManyValues = errors.New("only one value struct is allowed")
 
 type element struct {
 	Type        string
@@ -91,11 +94,27 @@ func (e *elements) decodeElements(factor int, value ...*yaml.Node) {
 
 // Generate generates unstructured go types for resources defined in yaml
 // manifests.
-func Generate(resourceYaml []byte, varName string) (string, error) {
+func Generate(resourceYaml []byte, varName string, values ...interface{}) (string, error) {
+	if len(values) > 1 {
+		return "", ErrTooManyValues
+	} else if len(values) == 1 {
+		yamlTemplate, err := template.New("yamlFile").Parse(string(resourceYaml))
+		if err != nil {
+			return "", fmt.Errorf("unable to parse template in yaml file, %w", err)
+		}
+
+		var yamlBuf bytes.Buffer
+
+		if err := yamlTemplate.Execute(&yamlBuf, values[0]); err != nil {
+			return "", fmt.Errorf("unable to resolve templating in yaml file, %w", err)
+		}
+
+		resourceYaml = yamlBuf.Bytes()
+	}
+
 	unstructuredObj := elements{}
 
-	err := yaml.Unmarshal(resourceYaml, &unstructuredObj)
-	if err != nil {
+	if err := yaml.Unmarshal(resourceYaml, &unstructuredObj); err != nil {
 		return "", fmt.Errorf("unable to unmarshal input yaml, %w", err)
 	}
 
@@ -129,12 +148,12 @@ func escape(str string) string {
 	if strings.ContainsAny(str, "\n"+`\`) {
 		str = strings.ReplaceAll(str, "`", "` + \"`\" + `")
 
-		return "`" + str + "`,"
+		return "`" + str + "`"
 	}
 
 	str = strings.ReplaceAll(str, `"`, `\"`)
 
-	return `"` + str + `",`
+	return `"` + str + `"`
 }
 
 func funcMap() template.FuncMap {
@@ -154,7 +173,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 {{- define "element" }}
 	{{- range . }}
 		{{- if .HeadComment }}
-		{{ .HeadComment }}
+			{{ .HeadComment }}
 		{{- end }}
 		{{- if eq .Type "!!null" }}
 			{{- if ne .IsSeq true }}
@@ -170,10 +189,17 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- end }}
 		{{- else if eq .Type "!!str" }}
 			{{- if ne .IsSeq true }}
-				"{{ .Key }}": {{ escape .Value -}}  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+				"{{ .Key }}": {{ escape .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- else }}
-				{{ escape .Value -}}  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+				{{ escape .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
+		{{- else if eq .Type "!!var" }}
+			{{- if ne .IsSeq true }}
+				"{{ .Key }}": {{ .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+			{{- else }}
+				{{ .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
+			{{- end }}
+
 		{{- else if eq .Type "!!map" }}
 			{{- if ne .IsSeq true }}
 				"{{ .Key }}": map[string]interface{}{  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
@@ -188,7 +214,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			},
 		{{- end }}
 		{{- if .FootComment }}
-		{{ .FootComment }}
+			{{ .FootComment }}
 		{{- end }}
 	{{- end }}
 {{- end }}
