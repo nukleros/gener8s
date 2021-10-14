@@ -148,10 +148,20 @@ func escape(str string) string {
 	if strings.ContainsAny(str, "\n"+`\`) {
 		str = strings.ReplaceAll(str, "`", "` + \"`\" + `")
 
+		if strings.ContainsAny(str, "!!") {
+			str = strings.ReplaceAll(str, "!!start", "` +")
+			str = strings.ReplaceAll(str, "!!end", "+ `")
+		}
+
 		return "`" + str + "`"
 	}
 
 	str = strings.ReplaceAll(str, `"`, `\"`)
+
+	if strings.ContainsAny(str, "!!") {
+		str = strings.ReplaceAll(str, "!!start", `" +`)
+		str = strings.ReplaceAll(str, "!!end", `+ "`)
+	}
 
 	return `"` + str + `"`
 }
@@ -199,7 +209,6 @@ var {{ .VarName }} = &unstructured.Unstructured{
 			{{- else }}
 				{{ .Value -}},  {{ if .LineComment }}// {{ .LineComment }}{{ end }}
 			{{- end }}
-
 		{{- else if eq .Type "!!map" }}
 			{{- if ne .IsSeq true }}
 				"{{ .Key }}": map[string]interface{}{  {{ if .LineComment }}// {{ .LineComment }}{{ end }}

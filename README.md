@@ -75,12 +75,16 @@ generating code with variable references.
 ## Variable References
 
 Sometimes you may want to generate code with variable references. To tell the
-generator a value is a variable, you may use a special `!!var` tag on that value.
+generator a value is a variable, you may use a special `!!var` yaml tag on that value.
 
+
+## Variable Reference Inside a string
+Sometimes to may want to generate code with a variable reference inside a string. To tell the 
+generator a value contains a variable inside it. Inside the value you may the special tags `!!start` to mark the start of the variable and `!!end` to mark the end. the generator will automatically interpolate these and escape quotation marks appropriately
 ## Example
 
-in this example we will combine both templating and variables.  Note that both
-templating and variable features are optional.  They can be used independently,
+in this example we will combine templating, variables, and nested variables.  Note that all
+these features are optional.  They can be used independently,
 together, or not at all.
 
 Example manifest:
@@ -98,11 +102,11 @@ spec:
     template:
         metadata:
             labels:
-                app: !!var '{{ .Label }}'  # templated variable reference
+                app: '{{ .Label }}'  # templated reference
         spec:
             containers:
               - name: webstore-container
-                image: !!var '{{ .Image }}'  # templated variable reference
+                image: my.private.repo/!!start image !!end  # nested variable reference
                 ports:
                   - containerPort: 8080
 ```
@@ -142,7 +146,7 @@ var test = &unstructured.Unstructured{
 					"containers": []interface{}{
 						map[string]interface{}{
 							"name":  "webstore-container",
-							"image": variable.With.Image.Value,
+							"image": "my.private.repo/" + variable.With.Image.Value + "",
 							"ports": []interface{}{
 								map[string]interface{}{
 									"containerPort": 8080,

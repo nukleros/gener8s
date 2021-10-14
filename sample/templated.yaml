@@ -14,6 +14,6 @@ spec:
         spec:
             containers:
               - name: webstore-container
-                image: !!var '{{ .Image }}'
+                image: my-private-repo/!!start Image !!end
                 ports:
                   - containerPort: 8080
