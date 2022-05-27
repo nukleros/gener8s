@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
+	"github.com/nukleros/gener8s/pkg/generate"
 )
 
 type Options struct {
@@ -20,13 +20,17 @@ type Options struct {
 	valuesFilePath   string
 }
 
-// GenerateCommand creates the generate subcommand.
-func (r *Root) GenerateCommand() *cobra.Command {
+// GenerateGoCommand creates the generate subcommand.
+func (r *Root) GenerateGoCommand() *cobra.Command {
 	generateCmd := &cobra.Command{
-		Use:   "generate",
+		Use:   "go",
 		Short: "Generate Go source code for Kubernetes object from yaml",
 		Long: `Pass a manifest file that contains valid yaml for any Kubernetes
 object and get source code for an unstructured Kubernetes object type.`,
+		Example: `
+# generate unstructured go code for a kubernetes object
+gener8s go -m /path/to/rbac.yaml
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestFile, err := filepath.Abs(r.Options.manifestFilepath)
 			if err != nil {

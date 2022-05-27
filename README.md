@@ -1,8 +1,15 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/vmware-tanzu-labs/object-code-generator-for-k8s.svg)](https://pkg.go.dev/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)
-[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/vmware-tanzu-labs/object-code-generator-for-k8s)](https://golang.org/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)](https://goreportcard.com/report/github.com/vmware-tanzu-labs/object-code-generator-for-k8s)
-[![GitHub](https://img.shields.io/github/license/vmware-tanzu-labs/object-code-generator-for-k8s)](https://github.com/vmware-tanzu-labs/object-code-generator-for-k8s/blob/main/LICENSE)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/vmware-tanzu-labs/object-code-generator-for-k8s)](https://github.com/vmware-tanzu-labs/object-code-generator-for-k8s/releases)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nukleros/gener8s.svg)](https://pkg.go.dev/github.com/nukleros/gener8s)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/nukleros/gener8s)](https://golang.org/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nukleros/gener8s)](https://goreportcard.com/report/github.com/nukleros/gener8s)
+[![GitHub](https://img.shields.io/github/license/nukleros/gener8s)](https://github.com/nukleros/gener8s/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/nukleros/gener8s)](https://github.com/nukleros/gener8s/releases)
+
+# Forked from nukleros/gener8s
+
+This project extends the hard work put in by the VMware Tanzu Labs team to originally create this utility.  It
+extends the functionality of the original intent of generating Go code to generating other various items
+for Kubernetes.
+
 # Object Code Generator for K8s
 
 Generate source code for unstructured Kubernetes Go types from yaml manifests.
@@ -11,6 +18,7 @@ This project is intended for use when scaffolding source code for Go projects
 that manage Kubernetes resources.
 
 It can be used in two ways:
+
 1. Imported and used as a package
 2. Installed and used as a CLI
 
@@ -26,7 +34,7 @@ import (
     "fmt"
     "io/ioutil"
 
-    "github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
+    "github.com/nukleros/gener8s/pkg/generate"
 )
 
 func main() {
@@ -45,7 +53,7 @@ func main() {
 }
 ```
 
-See `cmd/ocgk/main_test.go` for a more complete example that uses templating to create a Go
+See `cmd/gener8s/main_test.go` for a more complete example that uses templating to create a Go
 program that will create a Kubernetes deployment resource in a cluster.
 
 ## Command Line Interface
@@ -61,7 +69,7 @@ make install
 Generate object source code from a yaml manifest:
 
 ```bash
-ocgk generate --manifest-file path/to/manifest.yaml --variable-name varName
+gener8s go --manifest-file path/to/manifest.yaml --variable-name varName
 ```
 
 
@@ -79,7 +87,7 @@ generator a value is a variable, you may use a special `!!var` yaml tag on that 
 
 
 ## Variable Reference Inside a string
-Sometimes to may want to generate code with a variable reference inside a string. To tell the 
+Sometimes to may want to generate code with a variable reference inside a string. To tell the
 generator a value contains a variable inside it. Inside the value you may the special tags `!!start` to mark the start of the variable and `!!end` to mark the end. the generator will automatically interpolate these and escape quotation marks appropriately
 ## Example
 

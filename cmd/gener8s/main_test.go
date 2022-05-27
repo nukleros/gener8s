@@ -11,7 +11,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/vmware-tanzu-labs/object-code-generator-for-k8s/pkg/generate"
+	"github.com/nukleros/gener8s/pkg/generate"
 )
 
 //nolint: gochecknoglobals

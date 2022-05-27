@@ -23,7 +23,7 @@ func New() *Root {
 func (r Root) NewCommand() *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands.
 	return &cobra.Command{
-		Use:   "ocgk",
+		Use:   "gener8s",
 		Short: "Convert Kubernetes yaml manifests into unstructed Go types",
 		Long: `Generate Go source code for unstructured Kubernetes object types from
 yaml manifests so that you can manage resources with Go programs.`,
@@ -37,5 +37,5 @@ func (r *Root) Execute() {
 }
 
 func (r *Root) AddCommands() {
-	r.Command.AddCommand(r.GenerateCommand())
+	r.Command.AddCommand(r.GenerateGoCommand())
 }

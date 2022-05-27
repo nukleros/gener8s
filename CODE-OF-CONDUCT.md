@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We, as contributors, members, and leaders pledge to make participation with the object-code-generator-for-k8s `ocgk` and our
+We, as contributors, members, and leaders pledge to make participation with the object-code-generator-for-k8s `gener8s` and our
 community a harassment-free experience for all, regardless of age, body size, education, ethnicity, gender identity and expression, level of experience, nationality, orientation, personal appearance, race, religion, sex characteristics, sexual identity, socio-economic status, visible or invisible disability.
 
 We pledge to act and interact in ways that contribute to an open, diverse, inclusive, healthy and welcoming community.
@@ -13,7 +13,7 @@ We pledge to act and interact in ways that contribute to an open, diverse, inclu
 
 The way we behave with one another affects the condition of the environment in our community.
 
-The following are examples of behavior that positively impacts the environment in our community. 
+The following are examples of behavior that positively impacts the environment in our community.
 
 * Demonstrate empathy and kindness towards other people.
 * Be respectful of differing opinions, viewpoints, and experiences.
@@ -23,10 +23,10 @@ The following are examples of behavior that positively impacts the environment i
 
 ### Inappropriate Behavior
 
-The following are examples of behavior that negatively impacts the environment in our community. 
+The following are examples of behavior that negatively impacts the environment in our community.
 
 * Sexual language, imagery, attention or advances of any kind.
-* Trolling. 
+* Trolling.
 * Insulting comments, derogatory comments, personal attacks, and political attacks.
 * Public or private harassment.
 * Publishing private information about someone without receiving their written permission. Private information includes an email

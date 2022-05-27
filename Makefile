@@ -5,17 +5,17 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-TEST_OUTPUT ?= "/tmp/ocgk-test.go"
+TEST_OUTPUT ?= "/tmp/gener8s-test.go"
 TEST_MANIFEST ?= "sample/deploy.yaml"
 
 build:
-	go build ./cmd/ocgk
+	go build ./cmd/gener8s
 
 install: build
-	mv ocgk $(GOBIN)
+	mv gener8s $(GOBIN)
 
 test:
-	go test ./cmd/ocgk -args -manifest=../../$(TEST_MANIFEST) -output=$(TEST_OUTPUT)
+	go test ./cmd/gener8s -args -manifest=../../$(TEST_MANIFEST) -output=$(TEST_OUTPUT)
 
 test.run: test
 	go run $(TEST_OUTPUT)

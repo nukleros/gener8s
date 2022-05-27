@@ -1,5 +1,5 @@
 # How to Contribute
-1. The object-code-generator-for-k8s team welcomes contributions from the community.  Before you start working with `ocgk`, please read our [Developer Certificate of Origin](https://cla.vmware.com/dco).  All contributions to this repository must be signed as described on that page.  Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch.
+1. The object-code-generator-for-k8s team welcomes contributions from the community.  Before you start working with `gener8s`, please read our [Developer Certificate of Origin](https://cla.vmware.com/dco).  All contributions to this repository must be signed as described on that page.  Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch.
 1. Open an issue with what you intend to fix or would like to add into the project
 1. A project maintainer will triage and assess the impact of this feature or issue, and whether it should be brought into the project
 1. Once approval of the issue occurs, work on the issue should start by first forking the project
