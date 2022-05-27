@@ -4,21 +4,14 @@ package command
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/nukleros/gener8s/pkg/generate"
+	"github.com/nukleros/gener8s/pkg/generate/code"
 )
-
-type Options struct {
-	manifestFilepath string
-	variableName     string
-	valuesFilePath   string
-}
 
 // GenerateGoCommand creates the generate subcommand.
 func (r *Root) GenerateGoCommand() *cobra.Command {
@@ -37,7 +30,7 @@ gener8s go -m /path/to/rbac.yaml
 				return fmt.Errorf("%w", err)
 			}
 
-			yamlContent, err := ioutil.ReadFile(manifestFile)
+			yamlContent, err := os.ReadFile(manifestFile)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}
@@ -45,7 +38,7 @@ gener8s go -m /path/to/rbac.yaml
 			var values map[string]interface{}
 
 			if r.Options.valuesFilePath != "" {
-				valuesFile, vErr := ioutil.ReadFile(r.Options.valuesFilePath)
+				valuesFile, vErr := os.ReadFile(r.Options.valuesFilePath)
 				if err != nil {
 					return fmt.Errorf("%w", vErr)
 				}
@@ -55,7 +48,7 @@ gener8s go -m /path/to/rbac.yaml
 				}
 			}
 
-			source, err := generate.Generate(yamlContent, r.Options.variableName, values)
+			source, err := code.Generate(yamlContent, r.Options.variableName, values)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}

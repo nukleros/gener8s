@@ -6,6 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type Options struct {
+	manifestFilepaths []string
+	manifestFilepath  string
+	variableName      string
+	valuesFilePath    string
+
+	markersOnly bool
+}
+
 type Root struct {
 	Options Options
 	Command *cobra.Command
@@ -38,4 +47,5 @@ func (r *Root) Execute() {
 
 func (r *Root) AddCommands() {
 	r.Command.AddCommand(r.GenerateGoCommand())
+	r.Command.AddCommand(r.GenerateRBACCommand())
 }
