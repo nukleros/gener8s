@@ -11,7 +11,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/nukleros/gener8s/pkg/generate"
+	"github.com/nukleros/gener8s/pkg/generate/code"
 )
 
 //nolint: gochecknoglobals
@@ -37,7 +37,7 @@ func Test_main(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	object, err := generate.Generate(manifestYaml, "deployment")
+	object, err := code.Generate(manifestYaml, "deployment")
 	if err != nil {
 		t.Fatal(err)
 	}

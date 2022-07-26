@@ -25,7 +25,7 @@ object and get source code for an unstructured Kubernetes object type.`,
 gener8s go -m /path/to/rbac.yaml
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manifestFile, err := filepath.Abs(r.Options.manifestFilepath)
+			manifestFile, err := filepath.Abs(r.Options.ManifestFilepath)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}
@@ -37,8 +37,8 @@ gener8s go -m /path/to/rbac.yaml
 
 			var values map[string]interface{}
 
-			if r.Options.valuesFilePath != "" {
-				valuesFile, vErr := os.ReadFile(r.Options.valuesFilePath)
+			if r.Options.ValuesFilePath != "" {
+				valuesFile, vErr := os.ReadFile(r.Options.ValuesFilePath)
 				if err != nil {
 					return fmt.Errorf("%w", vErr)
 				}
@@ -48,7 +48,7 @@ gener8s go -m /path/to/rbac.yaml
 				}
 			}
 
-			source, err := code.Generate(yamlContent, r.Options.variableName, values)
+			source, err := code.Generate(yamlContent, r.Options.VariableName, values)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}
@@ -60,7 +60,7 @@ gener8s go -m /path/to/rbac.yaml
 	}
 
 	generateCmd.Flags().StringVarP(
-		&r.Options.manifestFilepath,
+		&r.Options.ManifestFilepath,
 		"manifest-file",
 		"m",
 		"",
@@ -68,7 +68,7 @@ gener8s go -m /path/to/rbac.yaml
 	)
 
 	generateCmd.Flags().StringVarP(
-		&r.Options.variableName,
+		&r.Options.VariableName,
 		"variable-name",
 		"v",
 		"object",
@@ -76,7 +76,7 @@ gener8s go -m /path/to/rbac.yaml
 	)
 
 	generateCmd.Flags().StringVarP(
-		&r.Options.valuesFilePath,
+		&r.Options.ValuesFilePath,
 		"values-file",
 		"f",
 		"",

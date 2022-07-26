@@ -10,10 +10,11 @@ import (
 // Rule contains the info needed to create the kubebuilder:rbac markers in
 // the controller.
 type Rule struct {
-	Group    string
-	Resource string
-	URLs     []string
-	Verbs    []string
+	Group        string
+	Resource     string
+	ResourceName string
+	URLs         []string
+	Verbs        []string
 }
 
 // ToMarker will return a specific marker in string format.

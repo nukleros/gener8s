@@ -12,6 +12,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/nukleros/gener8s/internal/options"
+	"github.com/nukleros/gener8s/pkg/manifests"
 	"gopkg.in/yaml.v3"
 )
 
@@ -91,6 +93,11 @@ func (e *elements) decodeElements(factor int, value ...*yaml.Node) {
 			*e = append(*e, elem)
 		}
 	}
+}
+
+// GenerateForManifests generates code for a set of manifest objects.
+func GenerateForManifests(manifests *manifests.Manifests, options *options.RBACOptions) (string, error) {
+	return "", nil
 }
 
 // Generate generates unstructured go types for resources defined in yaml

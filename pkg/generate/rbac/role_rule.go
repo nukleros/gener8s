@@ -20,10 +20,11 @@ var (
 // found.  This is because the underlying controller needs the same permissions
 // for the role or clusterrole that it is attempting to manage.
 type RoleRule struct {
-	Groups    RoleRuleField
-	Resources RoleRuleField
-	Verbs     RoleRuleField
-	URLs      RoleRuleField
+	Groups       RoleRuleField
+	Resources    RoleRuleField
+	ResourceName RoleRuleField
+	Verbs        RoleRuleField
+	URLs         RoleRuleField
 }
 
 type RoleRuleField []string

@@ -190,7 +190,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "rbac.authorization.k8s.io",
 					Resource: "clusterroles",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 			},
 		},
@@ -205,7 +205,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "rbac.authorization.k8s.io",
 					Resource: "clusterroles",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 			},
 		},
@@ -220,7 +220,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "rbac.authorization.k8s.io",
 					Resource: "clusterroles",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 			},
 		},
@@ -235,7 +235,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "core",
 					Resource: "services",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 			},
 		},
@@ -250,7 +250,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "rbac.authorization.k8s.io",
 					Resource: "clusterroles",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 				{
 					URLs:  []string{"/metrics"},
@@ -269,7 +269,7 @@ func TestRules_addForManifest(t *testing.T) {
 				{
 					Group:    "rbac.authorization.k8s.io",
 					Resource: "clusterroles",
-					Verbs:    defaultResourceVerbs(),
+					Verbs:    DefaultResourceVerbs(),
 				},
 				{
 					Group:    "group",

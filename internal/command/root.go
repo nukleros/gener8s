@@ -4,24 +4,19 @@ package command
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/nukleros/gener8s/internal/options"
 )
 
-type Options struct {
-	manifestFilepaths []string
-	manifestFilepath  string
-	variableName      string
-	valuesFilePath    string
-
-	markersOnly bool
-}
-
 type Root struct {
-	Options Options
+	Options *options.RBACOptions
 	Command *cobra.Command
 }
 
 func New() *Root {
-	rc := &Root{}
+	rc := &Root{
+		Options: &options.RBACOptions{},
+	}
 
 	rc.Command = rc.NewCommand()
 	rc.AddCommands()
