@@ -4,7 +4,8 @@
 [![GitHub](https://img.shields.io/github/license/nukleros/gener8s)](https://github.com/nukleros/gener8s/blob/main/LICENSE)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/nukleros/gener8s)](https://github.com/nukleros/gener8s/releases)
 
-# Forked from nukleros/gener8s
+# Forked from
+[vmware-tanzu-labs/object-code-generator-for-k8s](https://github.com/vmware-tanzu-labs/object-code-generator-for-k8s)
 
 This project extends the hard work put in by the VMware Tanzu Labs team to originally create this utility.  It
 extends the functionality of the original intent of generating Go code to generating other various items
