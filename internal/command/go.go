@@ -51,7 +51,7 @@ gener8s go -m /path/to/rbac.yaml
 				}
 			}
 
-			source, err := code.GenerateCode(manifests, r.Options)
+			source, err := code.GenerateCode(manifests, r.Options, values)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}

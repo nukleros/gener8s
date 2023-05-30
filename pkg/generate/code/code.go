@@ -239,7 +239,7 @@ var {{ .VarName }} = &unstructured.Unstructured{
 
 // GenerateCode will return the stdout form of unstructured go code, given a set of input
 // manifests, in go struct format.
-func GenerateCode(files *manifests.Manifests, options *options.RBACOptions) (string, error) {
+func GenerateCode(files *manifests.Manifests, options *options.RBACOptions, values map[string]interface{}) (string, error) {
 	var goString string
 
 	manifestData, err := GenerateYAML(files)
@@ -260,7 +260,7 @@ func GenerateCode(files *manifests.Manifests, options *options.RBACOptions) (str
 			options.VariableName = fmt.Sprintf("%s%d", options.VariableName, i)
 		}
 
-		asCode, err := Generate([]byte(resource), options.VariableName)
+		asCode, err := Generate([]byte(resource), options.VariableName, values)
 		if err != nil {
 			return goString, fmt.Errorf("%w - error generating code for yaml", err)
 		}
