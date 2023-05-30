@@ -5,12 +5,12 @@ package command
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
 	"github.com/nukleros/gener8s/pkg/generate/code"
+	"github.com/nukleros/gener8s/pkg/manifests"
 )
 
 // GenerateGoCommand creates the generate subcommand.
@@ -25,30 +25,33 @@ object and get source code for an unstructured Kubernetes object type.`,
 gener8s go -m /path/to/rbac.yaml
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manifestFile, err := filepath.Abs(r.Options.ManifestFilepath)
-			if err != nil {
-				return fmt.Errorf("%w", err)
-			}
-
-			yamlContent, err := os.ReadFile(manifestFile)
-			if err != nil {
-				return fmt.Errorf("%w", err)
-			}
 
 			var values map[string]interface{}
 
 			if r.Options.ValuesFilePath != "" {
 				valuesFile, vErr := os.ReadFile(r.Options.ValuesFilePath)
-				if err != nil {
+				if vErr != nil {
 					return fmt.Errorf("%w", vErr)
 				}
 
-				if vErr := yaml.Unmarshal(valuesFile, &values); err != nil {
+				if vErr := yaml.Unmarshal(valuesFile, &values); vErr != nil {
 					return fmt.Errorf("%w", vErr)
 				}
 			}
 
-			source, err := code.Generate(yamlContent, r.Options.VariableName, values)
+			manifests, err := manifests.ExpandManifests("", r.Options.ManifestFilepaths)
+			if err != nil {
+				return fmt.Errorf("%w", err)
+			}
+
+			// load manifest content for each manifest
+			for _, manifest := range *manifests {
+				if err = manifest.LoadContent(); err != nil {
+					return fmt.Errorf("%w", err)
+				}
+			}
+
+			source, err := code.GenerateCode(manifests, r.Options)
 			if err != nil {
 				return fmt.Errorf("%w", err)
 			}
@@ -59,12 +62,12 @@ gener8s go -m /path/to/rbac.yaml
 		},
 	}
 
-	generateCmd.Flags().StringVarP(
-		&r.Options.ManifestFilepath,
-		"manifest-file",
+	generateCmd.Flags().StringArrayVarP(
+		&r.Options.ManifestFilepaths,
+		"manifest-files",
 		"m",
-		"",
-		"path to manifest file containing resource definition",
+		[]string{},
+		"path to manifest files containing resource definition; may include globbing",
 	)
 
 	generateCmd.Flags().StringVarP(
@@ -83,7 +86,7 @@ gener8s go -m /path/to/rbac.yaml
 		"yaml file with values to insert into fields with !!tpl tags",
 	)
 
-	cobra.CheckErr(generateCmd.MarkFlagRequired("manifest-file"))
+	cobra.CheckErr(generateCmd.MarkFlagRequired("manifest-files"))
 
 	return generateCmd
 }
