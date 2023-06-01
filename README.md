@@ -67,10 +67,10 @@ Install:
 make install
 ```
 
-Generate object source code from a yaml manifest:
+Generate object source code from one or more yaml manifests:
 
 ```bash
-gener8s go --manifest-file path/to/manifest.yaml --variable-name varName
+gener8s go --manifest-files path/to/manifests/*.yaml --variable-name varName
 ```
 
 
