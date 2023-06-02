@@ -236,3 +236,64 @@ var {{ .VarName }} = &unstructured.Unstructured{
 	{{- end }}
 {{- end }}
 `
+
+// GenerateCode will return the stdout form of unstructured go code, given a set of input
+// manifests, in go struct format.
+func GenerateCode(files *manifests.Manifests, options *options.RBACOptions, values map[string]interface{}) (string, error) {
+	var goString string
+
+	manifestData, err := GenerateYAML(files)
+	if err != nil {
+		return goString, fmt.Errorf("%w - error generating yaml", err)
+	}
+
+	manifest := &manifests.Manifest{Content: []byte(manifestData)}
+
+	extractedManifests := manifest.ExtractManifests()
+
+	for i, resource := range extractedManifests {
+		resource = strings.TrimSpace(resource)
+		if resource == "" {
+			continue
+		}
+		if len(extractedManifests) > 1 {
+			options.VariableName = fmt.Sprintf("%s%d", options.VariableName, i)
+		}
+
+		asCode, err := Generate([]byte(resource), options.VariableName, values)
+		if err != nil {
+			return goString, fmt.Errorf("%w - error generating code for yaml", err)
+		}
+
+		if goString == "" {
+			goString = fmt.Sprintf("%s\n\n", asCode)
+		} else {
+			goString = fmt.Sprintf("%s%s\n", goString, asCode)
+		}
+	}
+
+	return goString, nil
+}
+
+// GenerateYAML will return the stdout form of unstructured objects in YAML format given a set of input manifest.
+func GenerateYAML(files *manifests.Manifests) (string, error) {
+
+	var resources []string
+
+	for _, manifest := range *files {
+		resources = append(resources, manifest.ExtractManifests()...)
+	}
+
+	var resourceString string
+	for i, resource := range resources {
+
+		if i == 0 {
+			resourceString = resource
+		} else {
+			resourceString = fmt.Sprintf("%s---\n%s", resourceString, resource)
+		}
+	}
+
+	return resourceString, nil
+
+}

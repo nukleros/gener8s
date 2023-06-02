@@ -66,23 +66,14 @@ func ExpandManifests(parentPath string, manifestPaths []string) (*Manifests, err
 func (manifest *Manifest) ExtractManifests() []string {
 	var manifests []string
 
-	lines := strings.Split(string(manifest.Content), "\n")
+	manifestYaml := strings.Split(string(manifest.Content), "---")
 
-	var content string
-
-	for _, line := range lines {
-		if strings.TrimRight(line, " ") == "---" {
-			if len(content) > 0 {
-				manifests = append(manifests, content)
-				content = ""
-			}
-		} else {
-			content = content + "\n" + line
+	for _, object := range manifestYaml {
+		object = strings.TrimSpace(object)
+		if object == "" {
+			continue
 		}
-	}
-
-	if len(content) > 0 {
-		manifests = append(manifests, content)
+		manifests = append(manifests, object)
 	}
 
 	return manifests
