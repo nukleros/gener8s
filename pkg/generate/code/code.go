@@ -251,16 +251,17 @@ func GenerateCode(files *manifests.Manifests, options *options.RBACOptions, valu
 
 	extractedManifests := manifest.ExtractManifests()
 
+	variableName := options.VariableName
 	for i, resource := range extractedManifests {
 		resource = strings.TrimSpace(resource)
 		if resource == "" {
 			continue
 		}
 		if len(extractedManifests) > 1 {
-			options.VariableName = fmt.Sprintf("%s%d", options.VariableName, i)
+			variableName = fmt.Sprintf("%s%d", options.VariableName, i)
 		}
 
-		asCode, err := Generate([]byte(resource), options.VariableName, values)
+		asCode, err := Generate([]byte(resource), variableName, values)
 		if err != nil {
 			return goString, fmt.Errorf("%w - error generating code for yaml", err)
 		}
