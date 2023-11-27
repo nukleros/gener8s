@@ -5,6 +5,7 @@ package code
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/format"
@@ -12,9 +13,12 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	ghodss_yaml "github.com/ghodss/yaml"
+	"github.com/iancoleman/strcase"
 	"github.com/nukleros/gener8s/internal/options"
 	"github.com/nukleros/gener8s/pkg/manifests"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var ErrTooManyValues = errors.New("only one value struct is allowed")
@@ -251,15 +255,26 @@ func GenerateCode(files *manifests.Manifests, options *options.RBACOptions, valu
 
 	extractedManifests := manifest.ExtractManifests()
 
-	variableName := options.VariableName
-	for i, resource := range extractedManifests {
+	for _, resource := range extractedManifests {
 		resource = strings.TrimSpace(resource)
 		if resource == "" {
 			continue
 		}
-		if len(extractedManifests) > 1 {
-			variableName = fmt.Sprintf("%s%d", options.VariableName, i)
+
+		jsonManifest, err := ghodss_yaml.YAMLToJSON([]byte(resource))
+		if err != nil {
+			return "", fmt.Errorf("failed to convert YAML to JSON: %v", err)
 		}
+
+		// Create an unstructured object from the JSON representation.
+		unstructuredObj := &unstructured.Unstructured{}
+		if err := json.Unmarshal(jsonManifest, unstructuredObj); err != nil {
+			return "", fmt.Errorf("failed to unmarshal JSON into unstructured object: %v", err)
+		}
+
+		kind := unstructuredObj.GetKind()
+		name := strcase.ToCamel(unstructuredObj.GetName())
+		variableName := strcase.ToLowerCamel(kind + name)
 
 		asCode, err := Generate([]byte(resource), variableName, values)
 		if err != nil {

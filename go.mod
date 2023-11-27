@@ -4,6 +4,8 @@ go 1.17
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/ghodss/yaml v1.0.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/spf13/cobra v1.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.24.2
