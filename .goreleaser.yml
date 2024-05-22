@@ -15,7 +15,7 @@ builds:
     ldflags:
       - -s -w -extldflags '-static'
 archives:
-  - name_template: "gener8s_v{{ .Version }}_{{ toLower .Os }}_{{ .Arch }}"
+  - name_template: "gener8s_v{{ .Version }}_{{ tolower .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
@@ -37,7 +37,7 @@ changelog:
       - '^build(\(.*\))?:'
 brews:
   - name: gener8s
-    tap:
+    repository:
       owner: nukleros
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
@@ -50,7 +50,7 @@ brews:
 
     # Folder inside the repository to put the formula.
     # Default is the root folder.
-    folder: Formula
+    directory: Formula
 
     # Your app's homepage.
     # Default is empty.
