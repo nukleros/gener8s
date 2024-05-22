@@ -15,13 +15,7 @@ builds:
     ldflags:
       - -s -w -extldflags '-static'
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-    name_template: "gener8s_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - name_template: "gener8s_v{{ .Version }}_{{ toLower .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
