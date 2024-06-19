@@ -136,25 +136,33 @@ func GenerateYAML(files *manifests.Manifests, options *options.RBACOptions) (str
 			}
 
 			// determine the rbac rules for this resource
-			resourceRules, err := ForResource(&manifestObject)
+			resourceRules, err := ForResource(&manifestObject, options.Verbs...)
 			if err != nil {
 				return "", err
 			}
 
-			for _, resourceRule := range *resourceRules {
-				rule := &rbac.Rule{
-					Groups:    []string{resourceRule.Group},
-					Resources: []string{resourceRule.Resource},
-					Namespace: manifestObject.GetNamespace(),
-					Verbs:     options.Verbs,
+			for _, this := range *resourceRules {
+				var rule *rbac.Rule
 
-					// leave urls empty as we will never have a url derived from a manifest
-					URLs: []string{},
-				}
+				if this.isResourceRule() {
+					rule = &rbac.Rule{
+						Groups:    []string{this.Group},
+						Resources: []string{this.Resource},
+						Namespace: manifestObject.GetNamespace(),
+						Verbs:     this.Verbs,
 
-				// if we are requesting the resource names, we will also use the resource name as well
-				if options.UseResourceNames {
-					rule.ResourceNames = []string{manifestObject.GetName()}
+						// leave urls empty as we will never have a url derived from a manifest
+						URLs: []string{},
+					}
+
+					if options.UseResourceNames {
+						rule.ResourceNames = []string{manifestObject.GetName()}
+					}
+				} else {
+					rule = &rbac.Rule{
+						URLs:  this.URLs,
+						Verbs: this.Verbs,
+					}
 				}
 
 				if rulesByNS[manifestObject.GetNamespace()] == nil {
@@ -277,14 +285,12 @@ func GenerateMarkers(files *manifests.Manifests, options *options.RBACOptions) (
 			}
 
 			// determine the rbac rules for this resource
-			resourceRules, err := ForResource(&manifestObject)
+			resourceRules, err := ForResource(&manifestObject, options.Verbs...)
 			if err != nil {
 				return "", err
 			}
 
 			for _, rule := range *resourceRules {
-				rule.Verbs = options.Verbs
-
 				if rbacString == "" {
 					rbacString = fmt.Sprintf("%s\n", rule.ToMarker())
 				} else {
@@ -332,10 +338,10 @@ func GenerateCode(files *manifests.Manifests, options *options.RBACOptions) (str
 // a rule for the resource itself, in addition to adding particular rules for whatever
 // roles and cluster roles are requesting.  This is because the controller needs to have
 // permissions to manage the children that roles and cluster roles are requesting.
-func ForResource(manifest *unstructured.Unstructured) (*Rules, error) {
+func ForResource(manifest *unstructured.Unstructured, verbs ...string) (*Rules, error) {
 	rules := &Rules{}
 
-	if err := rules.addForResource(manifest); err != nil {
+	if err := rules.addForResource(manifest, verbs...); err != nil {
 		return rules, err
 	}
 
@@ -344,11 +350,11 @@ func ForResource(manifest *unstructured.Unstructured) (*Rules, error) {
 
 // ForResources will return a set of rules for particular kubernetes resources.  See ForResource
 // for more information as this is the same methodology used.
-func ForResources(manifests ...*unstructured.Unstructured) (*Rules, error) {
+func ForResources(manifests []*unstructured.Unstructured, verbs ...string) (*Rules, error) {
 	rules := &Rules{}
 
 	for _, manifest := range manifests {
-		if err := rules.addForResource(manifest); err != nil {
+		if err := rules.addForResource(manifest, verbs...); err != nil {
 			return rules, err
 		}
 	}

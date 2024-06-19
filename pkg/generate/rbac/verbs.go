@@ -16,7 +16,7 @@ OUTER:
 	for _, verb := range *verbs {
 		var isValid bool
 
-		for _, valid := range DefaultResourceVerbs() {
+		for _, valid := range ValidResourceVerbs() {
 			if verb == valid {
 				isValid = true
 
@@ -38,6 +38,12 @@ func DefaultResourceVerbs() []string {
 	return []string{
 		"get", "list", "watch", "create", "update", "patch", "delete",
 	}
+}
+
+// ValidResourceVerbs is a helper function to define any valid resource verbs.  These may differ
+// from the default verbs so we simply append any additional potential verbs that may be used.
+func ValidResourceVerbs() []string {
+	return append(DefaultResourceVerbs(), "deletecollection")
 }
 
 // defaultStatusVerbs is a helper function to define the default verbs which get placed

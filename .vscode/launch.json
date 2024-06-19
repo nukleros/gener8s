@@ -10,7 +10,16 @@
 			"request": "launch",
 			"mode": "auto",
 			"program": "${workspaceFolder}/cmd/gener8s",
-			"args": ["generate", "-m", "sample/templated.yaml", "-v", "test", "-f", "sample/values.yaml" ],
+			"args": ["generate", "-m", "sample/templated.yaml", "-v", "test", "-f", "sample/values.yaml"],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "Test Non-Resource URL RBAC",
+			"type": "go",
+			"request": "launch",
+			"mode": "auto",
+			"program": "${workspaceFolder}/cmd/gener8s",
+			"args": ["rbac", "yaml", "-m", "/tmp/test.yaml"],
 			"cwd": "${workspaceFolder}"
 		}
 	]

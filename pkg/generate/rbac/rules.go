@@ -55,14 +55,18 @@ func (rules *Rules) addForWorkload(workload rbacWorkloadProcessor) {
 }
 
 // addForResource will add a particular rule given an unstructured manifest.
-func (rules *Rules) addForResource(manifest *unstructured.Unstructured) error {
+func (rules *Rules) addForResource(manifest *unstructured.Unstructured, verbs ...string) error {
 	kind := manifest.GetKind()
+
+	if len(verbs) == 0 {
+		verbs = DefaultResourceVerbs()
+	}
 
 	rules.Add(
 		&Rule{
 			Group:    getGroup(manifest.GroupVersionKind().Group),
 			Resource: getResource(kind),
-			Verbs:    DefaultResourceVerbs(),
+			Verbs:    verbs,
 		},
 	)
 
@@ -79,10 +83,10 @@ func (rules *Rules) addForResource(manifest *unstructured.Unstructured) error {
 			return fmt.Errorf("%w; error converting resource rules %v", err, roleRules)
 		}
 
-		for _, rbacRoleRule := range rbacRoleRules {
+		for i := range rbacRoleRules {
 			rule := &RoleRule{}
-			if err := rule.processRaw(rbacRoleRule); err != nil {
-				return fmt.Errorf("%w; error processing rbac role rule %v", err, rbacRoleRule)
+			if err := rule.processRaw(rbacRoleRules[i]); err != nil {
+				return fmt.Errorf("%w; error processing rbac role rule %v", err, rbacRoleRules[i])
 			}
 
 			rules.Add(rule)
